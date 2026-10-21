@@ -1,3 +1,6 @@
+
+
+
 /* Explicit scoped sizes work with both Webflow's 10px root and a browser's 16px root. */
 .ke{--navy:#003357;--deep:#001e34;--ocean:#244f68;--cream:#f2ebe3;--brown:#7a5c3d;--muted:#536775;--line:#d7d2c9;--ocean-light:#315e74;--region-control-width:290px;
   /* kudanil.com tokens: --background--brown-20 / -80, --color--content--white */
@@ -219,8 +222,7 @@
 .ke-boat[data-heading=west] .ke-boat-face{transform:scaleX(-1)}
 .ke-boat-hull{display:block;width:100%;height:auto;color:var(--cream);filter:drop-shadow(0 1px 1px rgba(0,30,52,.9)) drop-shadow(0 3px 6px rgba(0,30,52,.45));transform-origin:50% 85%;animation:ke-rock 3.6s ease-in-out infinite}
 /* Wake: thin cream rings spread from the waterline behind the stern and fade, so the boat reads as afloat. */
-.ke-boat-wake{position:absolute;left:calc(var(--boat-w) * -.2);top:calc(var(--boat-w) * .12);width:0;height:0}
-.ke-boat[data-heading=west] .ke-boat-wake{left:calc(var(--boat-w) * .2)}
+.ke-boat-wake{position:absolute;left:0;top:calc(var(--boat-w) * .12);width:0;height:0}
 .ke-boat-wake i{position:absolute;left:calc(var(--boat-w) * -.6);top:calc(var(--boat-w) * -.14);width:calc(var(--boat-w) * 1.2);height:calc(var(--boat-w) * .28);border:1px solid rgba(242,235,227,.6);border-radius:50%;opacity:0;animation:ke-wake 4.5s cubic-bezier(.23,1,.32,1) infinite}
 .ke-boat-wake i:nth-child(2){animation-delay:1.5s}
 .ke-boat-wake i:nth-child(3){animation-delay:3s}

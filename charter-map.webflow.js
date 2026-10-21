@@ -500,7 +500,7 @@ async function mountCharterMap(root,options={}) {
       // A boat that would sit on a pin's label also docks, so it never covers a name.
       const p=project(mapPoint(boatShown),rendered),origin=markerLayer.getBoundingClientRect();let dock=null,closest=44;
       markers.forEach(m=>{if(m.anchor.hidden||m.anchor.classList.contains('is-exiting'))return;
-        const d=Math.hypot(Number(m.anchor.dataset.screenX)-p.x,Number(m.anchor.dataset.screenY)-p.y);if(d<closest){closest=d;dock=m;}
+        const d=Math.hypot(Number(m.anchor.dataset.screenX)-p.x,Number(m.anchor.dataset.screenY)-p.y);if(d<closest||(view==='world'&&m.isRegion&&d<(dock?closest:Infinity))){closest=d;dock=m;}
         const label=m.anchor.querySelector('.ke-marker-label'),r=label?.offsetParent&&label.getBoundingClientRect();
         if(!dock&&r&&p.x>r.left-origin.left-36&&p.x<r.right-origin.left+36&&p.y>r.top-origin.top-20&&p.y<r.bottom-origin.top+20)dock=m;});
       boat.style.transform=dock?`translate(${dock.anchor.dataset.screenX}px,${dock.anchor.dataset.screenY}px)`:`translate(${p.x}px,${p.y}px)`;
@@ -1078,7 +1078,7 @@ async function mountCharterMap(root,options={}) {
     if(calibrate)startCalibration();
   }catch(error){
     if(error.name!=='AbortError'){
-      root.dataset.error=error.message;
+      root.dataset.error=error.message;console.error('[Kudanil map]',error);
       intro.innerHTML='<h1>Your next voyage.</h1><p>The map could not be loaded. <a href="https://www.kudanil.com/schedule-rates">Browse charter schedules</a>.</p>';
       intro.style.pointerEvents='auto';status.textContent='Map unavailable. The schedule link is still available.';
     }
