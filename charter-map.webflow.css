@@ -1,6 +1,3 @@
-
-
-
 /* Explicit scoped sizes work with both Webflow's 10px root and a browser's 16px root. */
 .ke{--navy:#003357;--deep:#001e34;--ocean:#244f68;--cream:#f2ebe3;--brown:#7a5c3d;--muted:#536775;--line:#d7d2c9;--ocean-light:#315e74;--region-control-width:290px;
   /* kudanil.com tokens: --background--brown-20 / -80, --color--content--white */
@@ -227,6 +224,10 @@
 .ke-boat-wake i:nth-child(2){animation-delay:1.5s}
 .ke-boat-wake i:nth-child(3){animation-delay:3s}
 .ke-boat[data-docked] .ke-boat-wake{display:none}
+/* Place name under a floating boat: one word, same small caps style as the map's destination labels. */
+.ke-boat-place{position:absolute;left:50%;top:calc(var(--boat-w) * .36);transform:translateX(-50%);padding:3px 6px;border-radius:2px;background:rgba(0,30,52,.72);
+  color:var(--cream);font:500 10px/1 'Forma DJR Micro',Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.ke-boat-place:empty,.ke-boat[data-docked] .ke-boat-place{display:none}
 @keyframes ke-wake{0%{transform:scale(.45);opacity:.7}100%{transform:scale(1.35);opacity:0}}
 @keyframes ke-rock{0%,100%{transform:rotate(-3.5deg) translateY(0)}50%{transform:rotate(3deg) translateY(-1.5px)}}
 
