@@ -806,9 +806,9 @@ async function mountCharterMap(root,options={}) {
     const nameAt=(point,limit)=>{let found='',best=limit;Object.entries(places).forEach(([key,p])=>{const d=Math.hypot((p.x-point.x)*19.2,(p.y-point.y)*10.8);if(d<best){best=d;found=p.name||key.replace(/(^|\s)\w/g,c=>c.toUpperCase());}});return found;};
     // On passage between charters it reads "To Ambon"; otherwise the nearest port or destination.
     const heading=at.state==='passage'&&at.voyage?.stops?.[0]?nameAt(at.voyage.stops[0],1):'';
-    const near=heading?`To ${heading}`:nameAt(at,40);
+    const close=nameAt(at,40),near=heading&&heading!==close?`To ${heading}`:close;
     $('.ke-boat-place').textContent=near;
-    boat.dataset.label=`Kudanil Explorer ${range.from?`on ${shortDate(day,false)}`:'today'}${near?`, ${heading?`sailing to ${heading}`:`near ${near}`}`:''}`;
+    boat.dataset.label=`Kudanil Explorer ${range.from?`on ${shortDate(day,false)}`:'today'}${near?`, ${near.startsWith('To ')?`sailing to ${heading}`:`near ${near}`}`:''}`;
     boat.setAttribute('aria-label',boat.dataset.label);
     delete boat.dataset.docked;// re-evaluated (and re-labelled) on the next draw
   }
