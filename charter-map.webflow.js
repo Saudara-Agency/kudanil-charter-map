@@ -452,7 +452,7 @@ async function mountCharterMap(root,options={}) {
   const places={...Object.fromEntries(LOCATIONS.map(p=>[p.name.toLowerCase(),p])),...(options.ports||PORTS),
     ...Object.fromEntries((options.locations||[]).map(p=>[p.name.toLowerCase(),p]))};
   const seaway=seaRouter(options.sea||SEA);
-  let boatTarget=null,boatShown=null,boatWidth=50;
+  let boatShown=null,boatWidth=50,boatPlan=null;
   const markers=[];
   root.dataset.view=view;
   root.innerHTML=`
@@ -594,32 +594,8 @@ async function mountCharterMap(root,options={}) {
       marker.anchor.style.transform=`translate(${p.x}px,${p.y}px)`;
       marker.anchor.dataset.screenX=p.x.toFixed(3);marker.anchor.dataset.screenY=p.y.toFixed(3);
     });
-    if(boatShown){
-      // The hull is drawn around its anchor (CSS .ke-boat-face): x -w/2..w/2, y -.28w..+.18w in screen px. Keep that box on water.
-      boatWidth=boat.querySelector('.ke-boat-face').offsetWidth||boatWidth;
-      // Hull size in map units at the framing the camera is heading to, so the water spot stays fixed for a whole flight
-      // (recomputing it per zoom frame made the boat jump between spots).
-      const k=1.15**Math.round(Math.log(boatWidth/(flight?flight.to.scale:camera.scale))/Math.log(1.15)),box={x0:-.55*k/19.2,x1:.55*k/19.2,y0:-.3*k/10.8,y1:.2*k/10.8};
-      const p=project(mapPoint(seaway.afloat(boatShown,box)),rendered);
-      // Dock only when the boat is actually at a destination (map distance, so zoom never changes the answer).
-      // It then badges that destination's pin, or on the overview that destination's region pin; otherwise it floats at its true spot.
-      let dock=null;const visibleAnchor=mk=>mk&&!mk.anchor.hidden&&!mk.anchor.classList.contains('is-exiting');
-      let here=null,best=40;
-      markers.forEach(mk=>{if(mk.isRegion)return;const d=Math.hypot((mk.point.x-boatShown.x)*19.2,(mk.point.y-boatShown.y)*10.8);if(d<best){best=d;here=mk;}});
-      if(here)dock=visibleAnchor(here)?here:markers.find(mk=>mk.isRegion&&mk.point.members?.includes(here.point.id)&&visibleAnchor(mk))||null;
-      // A floating boat that would sit on top of a visible pin moors beside it instead, so it never covers a pin.
-      if(!dock)dock=markers.find(mk=>{if(!visibleAnchor(mk))return false;const half=mk.button.offsetWidth/2,dx=p.x-mk.anchor.dataset.screenX,dy=p.y-mk.anchor.dataset.screenY;
-        return Math.abs(dx)<boatWidth/2+half&&dy>-.18*boatWidth-half&&dy<.28*boatWidth+half;})||null;
-      boat.style.transform=dock?`translate(${dock.anchor.dataset.screenX}px,${dock.anchor.dataset.screenY}px)`:`translate(${p.x}px,${p.y}px)`;
-      // The boat moors on the pin side away from the name, so it never covers the label.
-      if(dock)boat.dataset.dockSide=dock.button.dataset.label==='left'?'right':'left';
-      if((boat.dataset.docked||'')!==(dock?.point.id||'')){
-        if(dock)boat.dataset.docked=dock.point.id;else delete boat.dataset.docked;
-        // Mooring and casting off fade briefly instead of a hard cut.
-        if(!reduced.matches)boat.animate([{opacity:0},{opacity:1}],{duration:220,easing:'cubic-bezier(.23,1,.32,1)'});
-        boat.setAttribute('aria-label',dock?`${boat.dataset.label.split(',')[0]}, at ${dock.point.name}`:boat.dataset.label);
-      }
-    }
+    // The boat's spot is planned once per view/date (planBoat); a frame only carries it with the map, so it never flickers.
+    if(boatPlan){const pin=boatPlan.pin,p=pin?{x:+pin.anchor.dataset.screenX,y:+pin.anchor.dataset.screenY}:project(boatPlan.point,rendered);boat.style.transform=`translate(${p.x}px,${p.y}px)`;}
     root.dataset.cameraScale=String(camera.scale);
   }
   // Bronze islands per region, faded in like the live bespoke-expeditions hover.
@@ -632,6 +608,31 @@ async function mountCharterMap(root,options={}) {
     const glow=regionGlow(regions.map(region=>region.id),{view,activeRegion,hovered});
     geometry.querySelectorAll('.ke-glow').forEach(group=>{const value=glow[group.dataset.region]||0;group.style.opacity=value;group.toggleAttribute('data-off',!value);});
   }
+  function planBoat(cam=flight?flight.to:camera) {
+    // Decided for the framing the camera is heading to and the pins that view shows, so it holds for a whole flight.
+    if(!boatShown||boat.hidden){boatPlan=null;return;}
+    boatWidth=boat.querySelector('.ke-boat-face').offsetWidth||boatWidth;
+    const w=boatWidth,shown=mk=>view==='world'?mk.isRegion:!mk.isRegion&&Boolean(lookup[activeRegion]?.members.includes(mk.point.id));
+    // At a destination: moor beside its pin, or on the overview beside its region pin.
+    let here=null,best=40;
+    markers.forEach(mk=>{if(mk.isRegion)return;const d=Math.hypot((mk.point.x-boatShown.x)*19.2,(mk.point.y-boatShown.y)*10.8);if(d<best){best=d;here=mk;}});
+    let pin=here?(shown(here)?here:markers.find(mk=>mk.isRegion&&mk.point.members?.includes(here.point.id)&&shown(mk))||null):null;
+    // At sea: keep the hull on water at this framing; if it would cover a pin, moor beside that pin instead.
+    const k=1.15**Math.round(Math.log(w/cam.scale)/Math.log(1.15)),box={x0:-.55*k/19.2,x1:.55*k/19.2,y0:-.3*k/10.8,y1:.2*k/10.8};
+    const point=mapPoint(seaway.afloat(boatShown,box));
+    if(!pin){
+      const at=project(point,cam),half=Math.max(...markers.map(mk=>mk.button.offsetWidth))/2;
+      pin=markers.find(mk=>{if(!shown(mk))return false;const q=project(mapPoint(mk.point),cam),dx=at.x-q.x,dy=at.y-q.y;
+        return Math.abs(dx)<w/2+half&&dy>-.18*w-half&&dy<.28*w+half;})||null;
+    }
+    const before=boatPlan,moved=!before||before.pin!==pin||(!pin&&(before.point.x!==point.x||before.point.y!==point.y));
+    boatPlan={pin,point};
+    if(pin){boat.dataset.docked=pin.point.id;boat.dataset.dockSide=pin.button.dataset.label==='left'?'right':'left';}else delete boat.dataset.docked;
+    boat.setAttribute('aria-label',pin&&!pin.isRegion?`${boat.dataset.label.split(',')[0]}, at ${pin.point.name}`:boat.dataset.label);
+    // One short fade when the spot changes (new view or dates), never per frame.
+    if(moved&&before&&!reduced.matches)boat.animate([{opacity:0},{opacity:1}],{duration:260,easing:'cubic-bezier(.23,1,.32,1)'});
+    draw();
+  }
   function tick(now) {
     frame=0;
     if(disposed)return;
@@ -641,17 +642,14 @@ async function mountCharterMap(root,options={}) {
       if(progress===1){flight=null;root.dataset.moving='false';if(view==='world')hideDestinationMarkers();}
     }
     drift.x+=(pointer.x-drift.x)*.08;drift.y+=(pointer.y-drift.y)*.08;
-    const sailing=boatShown&&boatTarget&&Math.hypot(boatTarget.x-boatShown.x,boatTarget.y-boatShown.y)>.01;
-    // Labels steer clear of the boat, so re-place them once it settles.
-    if(sailing){boatShown={x:boatShown.x+(boatTarget.x-boatShown.x)*.06,y:boatShown.y+(boatTarget.y-boatShown.y)*.06};}
     draw();
-    if(flight||sailing||Math.abs(pointer.x-drift.x)+Math.abs(pointer.y-drift.y)>.03)schedule();
+    if(flight||Math.abs(pointer.x-drift.x)+Math.abs(pointer.y-drift.y)>.03)schedule();
   }
   function schedule(){if(!frame&&!disposed)frame=requestAnimationFrame(tick);}
   function fly(to,duration=1500) {
     flight=null;
-    if(reduced.matches){camera=to;draw();placeLabels();root.dataset.moving='false';return;}
-    flight={from:{...camera},to,start:performance.now(),duration};root.dataset.moving='true';
+    if(reduced.matches){camera=to;planBoat();draw();placeLabels();root.dataset.moving='false';return;}
+    flight={from:{...camera},to,start:performance.now(),duration};root.dataset.moving='true';planBoat();
     schedule();
   }
   function reveal(element,delay=0) {
@@ -696,7 +694,7 @@ async function mountCharterMap(root,options={}) {
       m.anchor.classList.toggle('is-related',Boolean(activeLocation&&activeLocation!==m.point.id&&tripsAt(trips,activeLocation).some(t=>t.locations.includes(m.point.id))));
       if(appeared)reveal(m.anchor,100+markers.filter(n=>n.isRegion===m.isRegion).indexOf(m)*35);
     });
-    placeLabels();
+    placeLabels();planBoat();
   }
   function hideDestinationMarkers() {
     markers.filter(marker=>!marker.isRegion).forEach(marker=>{marker.exitTimer&&clearTimeout(marker.exitTimer);marker.exitTimer=null;marker.anchor.getAnimations().forEach(animation=>animation.cancel());marker.anchor.hidden=true;marker.anchor.classList.remove('is-exiting');marker.anchor.style.opacity='';});
@@ -825,7 +823,7 @@ async function mountCharterMap(root,options={}) {
   function placeBoat() {
     const from=period().from,today=dateKey(),day=from<today?today:from,at=boatPosition(voyages,places,day,seaway);
     boat.hidden=!at;if(!at)return;
-    boatTarget={x:at.x,y:at.y};if(!boatShown||reduced.matches)boatShown={...boatTarget};
+    boatShown={x:at.x,y:at.y};
     if(at.heading)boat.dataset.heading=at.heading>0?'east':'west';
     // Off-pin the boat names the nearest known port or destination (e.g. Ambon), so it never looks lost at sea.
     const nameAt=(point,limit)=>{let found='',best=limit;Object.entries(places).forEach(([key,p])=>{const d=Math.hypot((p.x-point.x)*19.2,(p.y-point.y)*10.8);if(d<best){best=d;found=p.name||key.replace(/(^|\s)\w/g,c=>c.toUpperCase());}});return found;};
@@ -834,7 +832,7 @@ async function mountCharterMap(root,options={}) {
     const close=nameAt(at,40),near=heading&&heading!==close?`To ${heading}`:close;
     boat.dataset.label=`Kudanil Explorer on ${shortDate(day,false)}${near?`, ${near.startsWith('To ')?`sailing to ${heading}`:`near ${near}`}`:''}`;
     boat.setAttribute('aria-label',boat.dataset.label);
-    delete boat.dataset.docked;// re-evaluated (and re-labelled) on the next draw
+    planBoat();
   }
   function refreshCalendar() {
     renderRange();syncQuickTrigger();
@@ -1263,7 +1261,7 @@ async function mountCharterMap(root,options={}) {
     await document.fonts.ready;
     if(disposed)return api;
     // Header text metrics settle with web fonts; reframe the untouched overview once.
-    if(!disposed){syncHeaderInset();if(view==='world'&&!flight){camera=worldCamera();draw();}placeLabels();}
+    if(!disposed){syncHeaderInset();if(view==='world'&&!flight){camera=worldCamera();draw();}placeLabels();planBoat();}
     root.dataset.ready='true';
     if(calibrate)startCalibration();
   }catch(error){
