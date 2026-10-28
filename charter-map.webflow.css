@@ -1,69 +1,76 @@
-/* Explicit scoped sizes work with both Webflow's 10px root and a browser's 16px root. */
-.ke{--navy:#003357;--deep:#001e34;--ocean:#244f68;--cream:#f2ebe3;--brown:#7a5c3d;--muted:#536775;--line:#d7d2c9;--ocean-light:#315e74;--region-control-width:290px;
-  /* kudanil.com tokens: --background--brown-20 / -80, --color--content--white */
-  --brown-20:#e6d9cd;--brown-80:#846845;--white:#fff;--navy-40:rgba(0,51,87,.4);--hover-white:#f8f8f8;
-  --green:#326b4b;--green-bg:#cde6d8;--red:#944848;--red-bg:#f2dddd;--yellow:#77601b;--yellow-bg:#f4eac4;--outside:#626b64;
-  --ease:cubic-bezier(.785,.135,.15,.86);--ease-out:cubic-bezier(.22,1,.36,1);--gutter:60px;--drawer-width:520px;
+
+
+
+/* --u is kudanil.com's fluid rem (10px from 1920 up, 430 canvas on phones), scoped so the component scales like the site under any root size. */
+.ke{--panel:#fff;--u:clamp(6.8px,.5208333vw,10px);
+  --navy:#003357;--navy-10:#0033571a;--navy-20:#00335733;--navy-40:#00335766;--navy-60:#00335799;--navy-80:#003357cc;
+  --cream:#f2ebe3;--brown-20:#e6d9cd;--brown-80:#846845;--white:#fff;--hover-white:#f8f8f8;--line:var(--navy-10);--muted:var(--navy-80);
+  /* Status: site sage for available; unavailable and tentative are soft tints, unavailable the quietest. */
+  --green:#387352;--green-bg:#cde6d8;--red:#a84f45;--red-bg:#f7dfdb;--red-line:#ecc2bc;--yellow:#7a5d22;--yellow-bg:#f3ebcf;--outside:var(--navy-40);
+  --r:max(3px,calc(var(--u) * .4));--r-lg:max(6px,calc(var(--u) * .8));--r-pin:max(2px,calc(var(--u) * .2));--hair:max(1px,calc(var(--u) * .1));
+  --fs-xs:max(12px,calc(var(--u) * 1.3));--fs-s:max(12px,calc(var(--u) * 1.4));--fs-b:max(13px,calc(var(--u) * 1.6));--fs-h5:max(15px,calc(var(--u) * 2));--fs-title:max(22px,calc(var(--u) * 3.2));
+  --ctl:max(40px,calc(var(--u) * 4.4));--pad:calc(var(--u) * 2.4);--region-control-width:max(236px,calc(var(--u) * 28));
+  --ease:cubic-bezier(.785,.135,.15,.86);--ease-out:cubic-bezier(.23,1,.32,1);--t-ui:180ms;--gutter:60px;--drawer-width:clamp(340px,calc(var(--u) * 46),520px);
   /* Pins size like the site's `.bes-map-location-ic`, whose rem is 0.52vw (10px from 1920px up): padding 1rem, glyph min(2.4rem,2.2vh). */
   --site-rem:min(.5208333333vw,10px);--pin-pad:var(--site-rem);--pin-icon:min(calc(var(--site-rem) * 2.4),2.2vh);--pin:calc(var(--pin-icon) + var(--pin-pad) * 2 + 2px);--ke-title-gap:24px;--layer-map:1;--layer-markers:2;--layer-chrome:3;--layer-drawer:4;
   position:relative;isolation:isolate;width:100%;height:100vh;height:100dvh;min-height:0;overflow:hidden;
-  color:var(--cream);background:var(--navy);font-family:'Forma DJR Micro',Arial,sans-serif;font-size:14px;line-height:1.5}
+  /* clip, not hidden: focus inside the off-screen drawer must never scroll the whole component sideways. */overflow:clip;
+  color:var(--navy);background:var(--cream);font-family:'Forma DJR Micro',Arial,sans-serif;font-size:var(--fs-b);line-height:1.4}
 .ke *{box-sizing:border-box}.ke [hidden]{display:none!important}
+.ke ::selection{background:var(--navy);color:var(--cream)}
 .ke button,.ke a{-webkit-tap-highlight-color:transparent}.ke button{font:inherit;cursor:pointer;color:inherit}.ke button:disabled{cursor:default}
 .ke button:focus-visible,.ke a:focus-visible,.ke select:focus-visible{outline:2px solid currentColor;outline-offset:4px}.ke a{color:inherit}
+/* Script-moved focus after a pointer interaction gets no ring; any key press brings rings back (data-input set by the component). */
+.ke:not([data-input=key]) :focus-visible,.ke:not([data-input=key]) :focus-visible .ke-pin,.ke:not([data-input=key]) :focus-visible .ke-marker-label{outline:none}
 .ke h1,.ke h2,.ke h3,.ke h4,.ke p{margin:0}
 /* Headings follow the site's h1-h3: Forma DJR Deck 500, letter-spacing .01em, normal word spacing, no text shadow. */
 .ke h1,.ke h2,.ke h3{text-wrap:balance;font-family:'Forma DJR Deck',Arial,sans-serif;font-weight:500;letter-spacing:.01em;word-spacing:normal}
 .ke *{text-shadow:none}
-/* Site `.btn` (fill variant, size s): 4px radius, 650ms colour invert, label rolls up to a copy on hover. No :active or :focus styles exist on the site. */
-/* `.ke .ke-btn` outranks the generic `.ke button{font:inherit;color:inherit}` reset. */
-.ke .ke-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;overflow:hidden;padding:11.5px 16px;
-  border:max(1px,.1rem) solid var(--navy-40);border-radius:4px;background:var(--white);color:var(--navy);
-  font:500 16px/1 'Forma DJR Micro',Arial,sans-serif;text-transform:uppercase;letter-spacing:0;white-space:nowrap;text-decoration:none;
-  transition:border-width .65s ease-in-out,color .65s ease-in-out,background-color .65s var(--ease),border-radius .65s var(--ease)}
+/* Site-like thin navy scrollbars on the sidebar, drawer and option lists. */
+.ke-schedule-scroll,.ke-drawer-scroll,.ke-select-opts,.ke-region-options{scrollbar-width:thin;scrollbar-color:var(--navy) transparent}
+.ke ::-webkit-scrollbar{width:max(4px,calc(var(--u) * .6));height:max(4px,calc(var(--u) * .6))}
+.ke ::-webkit-scrollbar-track{background:transparent}.ke ::-webkit-scrollbar-thumb{background:var(--navy);border-radius:var(--r)}
+/* Site small button. `.ke .ke-btn` outranks the generic `.ke button{font:inherit;color:inherit}` reset. */
+.ke .ke-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:calc(var(--u) * 1);overflow:hidden;padding:calc(var(--u) * 1.15) calc(var(--u) * 1.6);
+  border:var(--hair) solid var(--navy-40);border-radius:var(--r);background:var(--white);color:var(--navy);
+  font:500 var(--fs-b)/1 'Forma DJR Micro',Arial,sans-serif;text-transform:uppercase;letter-spacing:0;white-space:nowrap;text-decoration:none;
+  transition:color var(--t-ui) var(--ease-out),background-color var(--t-ui) var(--ease-out),transform .16s var(--ease-out)}
 /* Forma's caps overshoot a 1em line box, so the rolling copy waits .35em below instead of peeking under the label. */
 .ke-flip{position:relative;display:block;overflow:hidden;text-align:center;--flip-gap:.35em}
-.ke-flip-txt{display:block;transition:transform .65s var(--ease)}.ke-flip-txt+.ke-flip-txt{position:absolute;left:0;right:0;top:calc(100% + var(--flip-gap))}
-.ke .ke-btn:hover{background:var(--navy);color:var(--white)}
-@media(hover:hover){.ke-btn:hover .ke-flip-txt{transform:translateY(calc(-100% - var(--flip-gap)))}}
+.ke-flip-txt{display:block;transition:transform .2s var(--ease-out)}.ke-flip-txt+.ke-flip-txt{position:absolute;left:0;right:0;top:calc(100% + var(--flip-gap))}
 .ke-fallback{padding:40px}
-/* Reference-inspired interwoven waves, kept quiet beneath the beige land. */
-.ke-ocean{position:absolute;inset:-24px;background:radial-gradient(ellipse at 78% 28%,var(--ocean-light),transparent 65%),linear-gradient(155deg,var(--ocean),var(--navy) 58%,var(--deep));pointer-events:none}
-.ke-ocean::before{content:'';position:absolute;inset:0;background:url('./assets/ocean-waves-v2.png') center/max(180px,33.333vmax) auto repeat;opacity:.065}
 /* Region controls sit together at the bottom of the map pane, clear of destination pins and labels. */
-.ke-nav{position:absolute;z-index:var(--layer-chrome);bottom:32px;left:50%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:12px;
-  width:calc(var(--region-control-width) * 2 + 12px);max-width:calc(100% - 48px);padding:0;background:transparent;pointer-events:none;transform:translateX(-50%);transition:left .9s var(--ease)}
-/* Equal columns and one shared height; neither label determines the row geometry. */
+.ke-nav{position:absolute;z-index:var(--layer-chrome);bottom:calc(var(--u) * 3.2);left:50%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:calc(var(--u) * 1.2);
+  width:calc(var(--region-control-width) * 2 + var(--u) * 1.2);max-width:calc(100% - 48px);padding:0;background:transparent;pointer-events:none;transform:translateX(-50%);transition:left .9s var(--ease)}
+/* Equal columns and one shared height; neither label determines the row geometry. Navy-outline small button on translucent linen. */
 .ke-nav [data-action=world]{width:100%;min-width:0}
-.ke .ke-nav .ke-btn{height:44px;min-height:44px;padding-block:0;font-size:clamp(12px,1.1vw,16px);line-height:1.2;pointer-events:auto}
-.ke-nav .ke-btn:focus-visible{outline-color:var(--white)}
-.ke-region-num{flex:none;display:grid;place-items:center;width:22px;height:22px;border:1px solid var(--brown-20);border-radius:2px;background:var(--cream);color:var(--brown-80);font-size:11px;line-height:1}
-/* Region dropdown: white panel, 4px radius, opens with opacity + 10px travel over 650ms (site custom select); rows highlight #F8F8F8, the current region is navy. */
+.ke .ke-nav .ke-btn{min-height:calc(var(--u) * 4.2);line-height:1.2;background:rgba(242,235,227,.86);pointer-events:auto}
+.ke-nav .ke-btn:focus-visible{outline-color:var(--navy)}
+.ke-region-num{flex:none;display:grid;place-items:center;width:max(20px,calc(var(--u) * 2.2));height:max(20px,calc(var(--u) * 2.2));border:var(--hair) solid var(--brown-20);border-radius:var(--r-pin);background:var(--cream);color:var(--brown-80);font-size:max(11px,calc(var(--u) * 1.2));line-height:1;font-variant-numeric:tabular-nums}
+/* Region dropdown opens toward its trigger with a short, interruptible transition. */
 .ke-region-menu{position:relative;pointer-events:auto;width:100%;min-width:0}
-.ke .ke-region-toggle{width:100%;height:44px;justify-content:space-between}
+.ke .ke-region-toggle{width:100%;justify-content:space-between}
 .ke-region-current{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
 .ke .ke-region-toggle .ke-chevron{transform:rotate(180deg)}.ke .ke-region-toggle[aria-expanded=true] .ke-chevron{transform:none}
-.ke-region-options{position:absolute;right:0;bottom:calc(100% + 8px);display:grid;gap:2px;width:100%;min-width:100%;padding:6px;background:var(--white);border:1px solid var(--navy-40);border-radius:4px;
-  opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .65s var(--ease),transform .65s var(--ease),visibility 0s .65s}
-.ke-region-options.is-open{opacity:1;visibility:visible;transform:none;transition:opacity .65s var(--ease),transform .65s var(--ease),visibility 0s}
-.ke .ke-region-option{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:0;border-radius:4px;background:transparent;color:var(--navy);
-  font:500 14px/1.2 'Forma DJR Micro',Arial,sans-serif;text-transform:uppercase;white-space:nowrap;text-align:left;transition:background-color .65s var(--ease),color .65s var(--ease)}
-.ke .ke-region-option:hover{background:var(--hover-white)}
+.ke-region-options{position:absolute;right:0;bottom:calc(100% + var(--u) * .8);display:grid;gap:2px;width:100%;min-width:100%;padding:calc(var(--u) * .6);background:var(--white);border:var(--hair) solid var(--navy-20);border-radius:var(--r);
+  opacity:0;visibility:hidden;transform:translateY(4px);transition:opacity .16s var(--ease-out),transform .16s var(--ease-out),visibility 0s .16s}
+.ke-region-options.is-open{opacity:1;visibility:visible;transform:none;transition:opacity .2s var(--ease-out),transform .2s var(--ease-out),visibility 0s}
+.ke .ke-region-option{display:flex;align-items:center;gap:calc(var(--u) * 1);width:100%;padding:calc(var(--u) * 1) calc(var(--u) * 1.2);border:0;border-radius:var(--r);background:transparent;color:var(--navy);
+  font:500 var(--fs-s)/1.2 'Forma DJR Micro',Arial,sans-serif;text-transform:uppercase;white-space:nowrap;text-align:left}
 .ke .ke-region-option[aria-current]{background:var(--navy);color:var(--white)}.ke .ke-region-option[aria-current] .ke-region-num{background:transparent;border-color:rgba(255,255,255,.3);color:var(--white)}
 .ke .ke-region-option:focus-visible{outline:2px solid var(--navy);outline-offset:-2px}
 .ke[data-view=location] .ke-nav{left:calc((100% - var(--drawer-width))/2);max-width:calc(100% - var(--drawer-width) - 32px)}
-.ke[data-view=location] .ke-footer{display:none}
 /* Phones: numbered region pins with a matching list, as on the site's own mobile expeditions map. */
 .ke-region-list{display:none}
 /* The map always fills the viewport. The site's fixed `.header` floats above it; --ke-header (its measured height, set by the component) offsets the chrome. */
 .ke-stage{position:absolute;z-index:var(--layer-map);inset:0;overflow:hidden;touch-action:manipulation}
-/* The site header is white over the map; a navy fade beneath it keeps the logo and menu legible over land. */
-.ke-stage::after{content:'';position:absolute;z-index:1;inset:0 0 auto;height:calc(var(--ke-header,0px) + 90px);pointer-events:none;
-  background:linear-gradient(180deg,rgba(0,30,52,.78) 0%,rgba(0,30,52,.52) 55%,rgba(0,30,52,0) 100%)}
+/* The site header is white text. Over the linen map it gets the live site's scrolled-header band: 10px backdrop blur under
+   its two black gradients (.35 to 0, one at .8 opacity), measured on kudanil.com/bespoke-expeditions. */
+.ke-stage::after{content:'';position:absolute;z-index:3;inset:0 0 auto;height:var(--ke-header,0px);pointer-events:none;
+  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);background:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,0)),linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,0))}
 .ke-map{position:absolute;width:100%;height:100%;inset:0;display:block;overflow:hidden;pointer-events:none}
-.ke-vignette{position:absolute;z-index:1;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-.ke-vignette-shade{opacity:.28;transition:opacity .9s var(--ease)}
-.ke[data-view=region] .ke-vignette-shade,.ke[data-view=location] .ke-vignette-shade{opacity:.34}
+/* Bronze islands (bespoke-expeditions hover): fade over .4s like the live site; hidden groups skip the filter paint. */
+.ke-glow{transition:opacity .24s cubic-bezier(.23,1,.32,1),visibility 0s}.ke-glow[data-off]{visibility:hidden;transition:opacity .2s ease-out,visibility 0s .2s}
 .ke-markers{position:absolute;inset:0;z-index:var(--layer-markers);pointer-events:none}
 .ke-anchor{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
 /* The marker box is centred on the destination coordinate. */
@@ -71,309 +78,435 @@
 /* Preserve the site's small visible pin; extend its invisible touch target instead. */
 .ke-marker::before{content:'';position:absolute;left:50%;top:50%;width:max(44px,var(--pin));height:max(44px,var(--pin));transform:translate(-50%,-50%)}
 .ke-anchor.is-exiting{pointer-events:none}.ke-anchor.is-exiting .ke-marker{pointer-events:none}
-/* Site `.bes-map-location-ic`: cream box, brown-20 border, 2px radius; hover fills brown-80 over .4s ease. */
+/* Site `.bes-map-location-ic`: cream box, brown-20 border, .2rem radius; hover fills brown-80 over .4s ease. */
 .ke-pin{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:var(--pin-pad);contain:paint;
-  border:1px solid var(--brown-20);border-radius:2px;background:var(--cream);color:var(--brown-80);
-  transition:color .4s ease,border-color .4s ease,background-color .4s ease}
+  border:var(--hair) solid var(--brown-20);border-radius:var(--r-pin);background:var(--cream);color:var(--brown-80);
+  transition:color .4s ease,border-color .4s ease,background-color .4s ease,box-shadow .4s ease}
 .ke-pin svg{display:block;width:100%;height:100%}
-.ke-marker:hover .ke-pin,.ke-marker[aria-pressed=true] .ke-pin{border-color:var(--brown-80);background:var(--brown-80);color:var(--cream)}
+.ke .ke-marker[aria-pressed=true] .ke-pin{border-color:var(--brown-80);background:var(--brown-80);color:var(--cream);box-shadow:rgba(132,104,69,.5) 0 calc(var(--u) * 1.5) calc(var(--u) * 2)}
+/* Hovered or selected names read at full strength even when the region has no dates. */
+.ke .ke-anchor .ke-marker[aria-pressed=true] .ke-marker-label{color:var(--navy)}
 .ke-marker-label{position:absolute;display:block;white-space:nowrap;pointer-events:auto;text-align:center}
-.ke-region .ke-marker-label{padding:10px 14px;border-radius:4px;color:var(--cream);background:var(--deep);font:500 20px/1.15 'Forma DJR Deck',Arial,sans-serif;letter-spacing:.01em;transition:background-color .65s var(--ease)}
-.ke-region:hover .ke-marker-label{background:var(--navy)}
+.ke-region .ke-marker-label{color:var(--navy);transition:color .2s cubic-bezier(.23,1,.32,1);font:500 clamp(14px,min(calc(var(--u) * 2.2),2.3vh),22px)/1.15 'Forma DJR Deck',Arial,sans-serif;letter-spacing:.01em}
 /* Destination names use the site button. Hovering the pin drives the same state; the open destination keeps it. */
-.ke .ke-marker-label.ke-btn{position:absolute;padding:9px 12px;font-size:clamp(12px,.833333vw,16px)}
-.ke .ke-marker:hover .ke-marker-label.ke-btn,.ke .ke-marker[aria-pressed=true] .ke-marker-label.ke-btn{background:var(--navy);color:var(--white)}
-@media(hover:hover){.ke-marker:hover .ke-marker-label .ke-flip-txt{transform:translateY(calc(-100% - var(--flip-gap)))}}
-.ke-pin-num{display:none;font:500 calc(var(--site-rem) * 1.4)/1 'Forma DJR Micro',Arial,sans-serif}
+.ke .ke-marker-label.ke-btn{position:absolute;padding:calc(var(--u) * .9) calc(var(--u) * 1.2);font-size:max(12px,calc(var(--u) * 1.6))}
+.ke .ke-anchor .ke-marker[aria-pressed=true] .ke-marker-label.ke-btn{border-color:var(--navy);background:var(--navy);color:var(--white)}
+.ke-pin-num{display:none;font:500 calc(var(--site-rem) * 1.4)/1 'Forma DJR Micro',Arial,sans-serif;font-variant-numeric:tabular-nums}
 .ke-marker[data-label=bottom] .ke-marker-label{left:50%;top:calc(100% + 8px);transform:translateX(-50%)}
 .ke-marker[data-label=top] .ke-marker-label{left:50%;bottom:calc(100% + 8px);transform:translateX(-50%)}
 .ke-marker[data-label=left] .ke-marker-label{right:calc(100% + 8px);top:50%;transform:translateY(-50%)}
 .ke-marker[data-label=right] .ke-marker-label{left:calc(100% + 8px);top:50%;transform:translateY(-50%)}
-.ke-marker:focus-visible{outline:0}.ke-marker:focus-visible .ke-marker-label,.ke-marker:focus-visible .ke-pin{outline:2px solid var(--cream);outline-offset:3px}
-.ke-anchor.is-related .ke-marker-label{outline:1px solid var(--cream);outline-offset:2px}
+.ke-marker:focus-visible{outline:0}.ke-marker:focus-visible .ke-marker-label,.ke-marker:focus-visible .ke-pin{outline:2px solid var(--navy);outline-offset:3px}
+.ke-anchor.is-related .ke-marker-label{outline:var(--hair) solid var(--navy);outline-offset:2px}
 .ke-intro{position:absolute;z-index:2;left:var(--gutter);top:calc(var(--ke-header,0px) + 32px);max-width:410px;pointer-events:none}
-.ke-intro h1{font-size:clamp(32px,4.2vw,58px);line-height:1}
-/* Sumatra sits under the intro once the Mentawai Islands are in frame: a scrim keeps it legible without text shadows.
-   Scrims start at the top of the viewport, never at the header's edge, so no seam shows under the header. */
-.ke-intro::before{content:'';position:absolute;z-index:-1;left:calc(var(--gutter)*-1);top:calc(-32px - var(--ke-header,0px));width:min(760px,100vw);height:calc(100% + 182px + var(--ke-header,0px));pointer-events:none;
-  background:radial-gradient(ellipse 100% 100% at 0 0,rgba(0,30,52,.82) 0%,rgba(0,30,52,.6) 45%,rgba(0,30,52,0) 100%)}
+.ke-intro{color:var(--navy)}.ke-intro h1{font-size:clamp(28px,min(4.2vw,7vh),58px);line-height:1}
 .ke-intro p{max-width:280px;margin-top:16px;font-size:14px;line-height:1.6}
-.ke-footer{position:absolute;z-index:var(--layer-chrome);left:var(--gutter);right:var(--gutter);bottom:24px;
-  display:flex;align-items:flex-end;justify-content:space-between;gap:24px;pointer-events:none}
-.ke-context{background:var(--deep);padding:12px 16px;border-radius:3px;max-width:360px;font-size:12px}
-.ke-context strong{display:block;font-size:14px;font-weight:500;margin-bottom:3px}
-.ke[data-view=region] .ke-footer{top:calc(var(--ke-header,0px) + var(--ke-title-gap));bottom:auto;left:50%;right:auto;width:max-content;max-width:calc(100% - 48px);display:block;transform:translateX(-50%)}
-.ke[data-view=region] .ke-context{position:relative;max-width:520px;padding:0;background:transparent;text-align:center}
-.ke[data-view=region] .ke-context strong{margin:0;font:500 36px/1 'Forma DJR Deck',Arial,sans-serif;letter-spacing:.01em}
-.ke[data-view=region] .ke-context span{display:block;margin-top:8px;font-size:12px;letter-spacing:.025em}
-/* Legibility over the map comes from a top scrim (the site header's on-scroll gradient), not text shadows. */
-.ke[data-view=region] .ke-context::before{content:'';position:absolute;z-index:-1;left:50%;top:calc(-1 * (var(--ke-header,0px) + var(--ke-title-gap)));width:200vw;height:calc(220px + var(--ke-header,0px));transform:translateX(-50%);pointer-events:none;
-  background:linear-gradient(180deg,rgba(0,30,52,.78) 0%,rgba(0,30,52,.5) 48%,rgba(0,30,52,0) 100%)}
-.ke-footer a{pointer-events:auto;font-size:12px;text-underline-offset:4px;background:var(--deep);padding:8px}
+/* Prev/next destination: the site's square slider control. */
 .ke-destination-nav{position:absolute;z-index:var(--layer-chrome);left:20px;right:calc(var(--drawer-width) + 20px);top:50%;display:flex;justify-content:space-between;align-items:center;transform:translateY(-50%);pointer-events:none}
-.ke-destination-nav button{pointer-events:auto;width:48px;height:48px;display:grid;place-items:center;border:1px solid rgba(242,235,227,.72);border-radius:50%;background:rgba(0,30,52,.58);font-size:32px;line-height:1;color:var(--cream);transition:background-color .65s var(--ease),color .65s var(--ease)}
-.ke-destination-nav button:hover,.ke-destination-nav button:focus-visible{background:var(--white);color:var(--navy)}
-.ke[data-view=location] .ke-footer{right:calc(var(--drawer-width) + 24px)}
-.ke-drawer{position:absolute;z-index:var(--layer-drawer);right:0;top:var(--ke-header,0px);bottom:0;width:var(--drawer-width);color:var(--navy);background:var(--cream);
-  transform:translateX(100%);visibility:hidden;pointer-events:none;transition:transform .72s var(--ease),visibility 0s .72s}
-.ke-drawer.is-open{transform:translateX(0);visibility:visible;pointer-events:auto;transition:transform .9s var(--ease),visibility 0s}
-.ke-drawer-scroll{height:100%;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--brown) var(--cream)}
+.ke .ke-destination-nav button{pointer-events:auto;width:var(--ctl);height:var(--ctl);display:grid;place-items:center;padding:0;border:var(--hair) solid var(--navy-20);border-radius:var(--r);background:var(--cream);color:var(--navy);
+  transition:background-color .2s var(--ease-out),color .2s var(--ease-out),border-color .2s var(--ease-out),transform .16s var(--ease-out)}
+.ke-destination-nav svg{width:max(12px,calc(var(--u) * 1.4));height:max(12px,calc(var(--u) * 1.4))}
+.ke-drawer{position:absolute;z-index:var(--layer-drawer);right:0;top:var(--ke-header,0px);bottom:0;width:var(--drawer-width);color:var(--navy);background:var(--panel);border-left:var(--hair) solid var(--navy-10);
+  transform:translateX(100%);visibility:hidden;pointer-events:none;transition:transform .32s var(--ease-drawer),visibility 0s .32s}
+.ke-drawer.is-open{transform:translateX(0);visibility:visible;pointer-events:auto;transition:transform .45s var(--ease-drawer),visibility 0s}
+.ke-drawer-scroll{height:100%;overflow:auto;overscroll-behavior:contain}
 /* Eyebrow removed: the title now sits beside the close button, so it keeps clear of it on the right. */
-.ke-drawer-head,.ke-schedule-head{position:sticky;z-index:3;top:0;background:var(--cream)}
-.ke-drawer-head{padding:24px 88px 8px 32px}
-.ke-close{position:absolute;z-index:2;top:16px;right:24px;flex:none;width:44px;height:44px;display:grid;place-items:center;background:var(--cream);border:1px solid var(--line);border-radius:4px;font-size:24px!important;
-  transition:background-color .3s ease,color .3s ease}.ke-close:hover{background:var(--navy);color:var(--cream)}
-.ke-drawer h2{font-size:36px;line-height:1}
-.ke-discover{display:inline-flex;align-items:center;min-height:44px;margin:0 32px;font-size:12px;text-underline-offset:4px;text-decoration-thickness:1px;color:var(--brown)!important}
-.ke-availability-controls{padding:4px 32px 20px;border-bottom:1px solid var(--line)}
-.ke-availability-views{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.ke .ke-availability-view{display:flex;align-items:center;justify-content:center;min-height:60px;padding:12px 14px;border:1px solid var(--navy-40);border-radius:4px;background:transparent;color:var(--navy);font:500 14px/1.35 'Forma DJR Micro',Arial,sans-serif;text-align:center;text-wrap:balance;transition:background-color .25s ease,color .25s ease,border-color .25s ease}
-.ke .ke-availability-view:hover{background:var(--brown-20);border-color:var(--navy)}
+.ke-drawer-head,.ke-schedule-head{position:sticky;z-index:3;top:0;background:var(--panel)}
+.ke-drawer-head{padding:calc(var(--u) * 2.4) calc(var(--pad) + var(--ctl) + var(--u) * 1.2) calc(var(--u) * .6) var(--pad)}
+/* Close and collapse share one square control box at the same spot. */
+.ke .ke-close,.ke .ke-collapse{position:absolute;z-index:2;top:calc(var(--u) * 1.6);right:calc(var(--u) * 1.6);flex:none;width:var(--ctl);height:var(--ctl);display:grid;place-items:center;padding:0;
+  background:var(--panel);color:var(--navy);border:var(--hair) solid var(--navy-20);border-radius:var(--r);
+  transition:background-color var(--t-ui) var(--ease-out),color var(--t-ui) var(--ease-out),transform .16s var(--ease-out)}
+.ke .ke-close{font-size:max(20px,calc(var(--u) * 2.4));line-height:1}
+.ke-drawer h2{font-size:var(--fs-title);line-height:1.1}
+/* Text links: site `.hover-un` 1px underline, a navy line draws over it from the left on hover. */
+.ke .ke-discover,.ke .ke-near button,.ke .ke-route-link,.ke .ke-clear-range,.ke .ke-clear-filters{padding:0;border:0;color:var(--navy);text-decoration:none;
+  background:linear-gradient(currentColor,currentColor) 0 100%/0 var(--hair) no-repeat,linear-gradient(var(--navy-40),var(--navy-40)) 0 100%/100% var(--hair) no-repeat;
+  transition:background-size .2s var(--ease-out)}
+.ke-discover{display:inline-block;margin:calc(var(--u) * .4) var(--pad) calc(var(--u) * 1.2);font-size:var(--fs-s);line-height:1.4}
+.ke-availability-controls{padding:calc(var(--u) * .4) var(--pad) calc(var(--u) * 1.6);border-bottom:var(--hair) solid var(--line)}
+.ke-availability-views{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:calc(var(--u) * .8)}
+.ke .ke-availability-view{display:flex;align-items:center;justify-content:center;min-height:max(44px,calc(var(--u) * 5.2));padding:calc(var(--u) * 1) calc(var(--u) * 1.2);border:var(--hair) solid var(--navy-40);border-radius:var(--r);background:transparent;color:var(--navy);font:500 var(--fs-s)/1.3 'Forma DJR Micro',Arial,sans-serif;text-align:center;text-wrap:balance}
 .ke .ke-availability-view[aria-pressed=true]{background:var(--navy);color:var(--white);border-color:var(--navy)}
-.ke-calendar{padding:16px 32px 20px;border-bottom:1px solid var(--line)}
-.ke-calendar-top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:304px;margin:0 auto 6px}
-.ke-calendar-arrow{width:44px;height:44px;flex:none;background:transparent;border:0;border-radius:4px;font-size:22px!important;color:var(--navy);transition:background-color .65s var(--ease)}
-.ke-calendar-arrow:hover:not(:disabled){background:var(--brown-20)}.ke-calendar-arrow:disabled{opacity:.3}
+.ke-calendar{padding:calc(var(--u) * 1.2) var(--pad) calc(var(--u) * 1.6);border-bottom:var(--hair) solid var(--line)}
+.ke-calendar-top{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u) * .8);max-width:calc(var(--u) * 36);margin:0 auto calc(var(--u) * .4)}
+.ke .ke-calendar-arrow{width:max(32px,calc(var(--u) * 4));height:max(32px,calc(var(--u) * 4));flex:none;padding:0;background:transparent;border:0;border-radius:var(--r);font-size:max(18px,calc(var(--u) * 2.2));line-height:1;color:var(--navy)}
+.ke-calendar-arrow:disabled{opacity:.3}
 /* Month/year trigger: caption doubles as the picker toggle; chevron flips like the site's custom select. */
-.ke .ke-period{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border:0;border-radius:4px;background:transparent;color:var(--navy);
-  font:500 17px/1 'Forma DJR Deck',Arial,sans-serif;letter-spacing:.01em;transition:background-color .65s var(--ease)}
-.ke-period:hover,.ke-period[aria-expanded=true]{background:var(--brown-20)}
-.ke-chevron{width:11px;height:8px;flex:none;transition:transform .65s var(--ease)}.ke-period[aria-expanded=true] .ke-chevron{transform:rotate(180deg)}
-.ke-calendar-body{position:relative;max-width:304px;margin:auto}
+.ke .ke-period{display:inline-flex;align-items:center;gap:calc(var(--u) * 1);min-height:max(32px,calc(var(--u) * 4));padding:0 calc(var(--u) * 1.2);border:0;border-radius:var(--r);background:transparent;color:var(--navy);
+  font:500 max(15px,calc(var(--u) * 1.9))/1 'Forma DJR Deck',Arial,sans-serif;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+.ke-period[aria-expanded=true]{background:var(--brown-20)}
+.ke-chevron{width:max(10px,calc(var(--u) * 1.1));height:max(7px,calc(var(--u) * .8));flex:none}.ke-period[aria-expanded=true] .ke-chevron{transform:rotate(180deg)}
+.ke-calendar-body{position:relative;max-width:calc(var(--u) * 36);margin:auto}
 .ke-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.ke-destination-dates{padding:0 var(--pad)}
 /* The picker covers the day grid's own footprint, so opening it never moves the drawer content. */
-.ke-picker{position:absolute;inset:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:8px;background:var(--cream);
-  opacity:0;visibility:hidden;transform:translateY(-10px);transition:opacity .65s var(--ease),transform .65s var(--ease),visibility 0s .65s}
-.ke-picker.is-open{opacity:1;visibility:visible;transform:none;transition:opacity .65s var(--ease),transform .65s var(--ease),visibility 0s}
-.ke-picker-year{display:flex;align-items:center;justify-content:space-between}.ke-picker-year .ke-calendar-arrow{width:36px;height:36px}
+.ke-picker{position:absolute;inset:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:calc(var(--u) * .8);background:var(--panel);
+  opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .18s var(--ease-out),transform .18s var(--ease-out),visibility 0s .18s}
+.ke-picker.is-open{opacity:1;visibility:visible;transform:none;transition:opacity .2s var(--ease-out),transform .2s var(--ease-out),visibility 0s}
+.ke-picker-year{display:flex;align-items:center;justify-content:space-between}.ke .ke-picker-year .ke-calendar-arrow{width:max(32px,calc(var(--u) * 3.6));height:max(32px,calc(var(--u) * 3.6))}
 .ke-picker-year-control{position:relative;display:flex;align-items:center}
-.ke-picker-year-control .ke-chevron{position:absolute;right:10px;pointer-events:none}
-.ke-picker-year-label{appearance:none;min-height:40px;padding:8px 30px 8px 12px;border:1px solid var(--line);border-radius:4px;background:var(--cream);font:500 15px/1 'Forma DJR Micro',Arial,sans-serif;font-variant-numeric:tabular-nums;color:var(--navy);cursor:pointer}
-.ke-picker-months{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:6px}
+.ke-picker-year-control .ke-chevron{position:absolute;right:calc(var(--u) * 1);pointer-events:none}
+.ke-picker-year-label{appearance:none;min-height:max(32px,calc(var(--u) * 4));padding:calc(var(--u) * .8) calc(var(--u) * 3) calc(var(--u) * .8) calc(var(--u) * 1.2);border:var(--hair) solid var(--navy-20);border-radius:var(--r);background:var(--cream);font:500 var(--fs-b)/1 'Forma DJR Micro',Arial,sans-serif;font-variant-numeric:tabular-nums;color:var(--navy);cursor:pointer}
+.ke-picker-months{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:calc(var(--u) * .6)}
 .ke-picker-month{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0;
-  border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--navy);font:500 12px/1 'Forma DJR Micro',Arial,sans-serif;text-transform:uppercase;
-  transition:background-color .65s var(--ease),color .65s var(--ease),border-color .65s var(--ease)}
+  border:var(--hair) solid var(--line);border-radius:var(--r);background:transparent;color:var(--navy);font:500 var(--fs-xs)/1 'Forma DJR Micro',Arial,sans-serif;text-transform:uppercase}
 .ke-picker-month::after{content:'';width:5px;height:5px;border-radius:50%;background:transparent}
 .ke-picker-month.has-availability::after{background:var(--green)}
-.ke-picker-month:hover:not(:disabled){background:var(--brown-20);border-color:var(--brown-20)}
 .ke-picker-month.is-current{border-color:var(--navy-40)}
-.ke-picker-month.is-selected,.ke-picker-month.is-selected:hover{background:var(--navy);border-color:var(--navy);color:var(--white)}
+.ke-picker-month.is-selected{background:var(--navy);border-color:var(--navy);color:var(--white)}
 .ke-picker-month.is-selected.has-availability::after{background:var(--green-bg)}
-.ke-picker-month:disabled{color:rgba(0,51,87,.3);border-color:transparent}
-.ke-weekday{font-size:11px;text-align:center;line-height:22px;color:var(--muted)}
-.ke-day{height:28px;display:grid;place-items:center;font-size:12px;border-radius:3px;font-variant-numeric:tabular-nums}
+.ke-picker-month:disabled{color:var(--navy-20);border-color:transparent}
+.ke-weekday{font-size:max(11px,calc(var(--u) * 1.2));text-align:center;line-height:calc(var(--u) * 2.4);color:var(--navy-60)}
+.ke-day{height:calc(var(--u) * 3.4);min-height:24px;display:grid;place-items:center;font-size:var(--fs-xs);border-radius:var(--r);font-variant-numeric:tabular-nums}
 .ke-day.available{background:var(--green-bg);color:var(--green)}.ke-day.unavailable{background:var(--red-bg);color:var(--red)}
-.ke-day.tentative{background:var(--yellow-bg);color:var(--yellow)}.ke-day.outside{color:var(--outside);background:transparent}
-.ke-day.is-today{outline:1px solid currentColor;outline-offset:-3px}
-.ke-legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--muted)}
+.ke-day.tentative{background:var(--yellow-bg);color:var(--yellow)}.ke-day.outside{color:var(--outside);background:transparent}.ke-day.past{color:var(--navy-20);background:transparent}
+.ke-day.is-today{outline:var(--hair) solid currentColor;outline-offset:-3px}
+.ke-legend{display:flex;gap:calc(var(--u) * 1.4);justify-content:center;flex-wrap:wrap;margin-top:calc(var(--u) * 1.2);font-size:max(11px,calc(var(--u) * 1.2));color:var(--navy-80)}
 .ke-legend span{display:flex;align-items:center;gap:5px}.ke-legend i{width:7px;height:7px;border-radius:50%;display:inline-block}
 .ke-legend .available{background:var(--green)}.ke-legend .unavailable{background:var(--red)}.ke-legend .tentative{background:var(--yellow)}
-.ke .ke-find-dates{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:304px;min-height:44px;margin:16px auto 0;padding:10px 12px;border:1px solid var(--navy-40);border-radius:4px;background:transparent;color:var(--navy);font-size:12px;text-decoration:none}
-.ke .ke-find-dates:hover{background:var(--brown-20);border-color:var(--navy)}
-.ke-trips{padding:28px 32px 40px}.ke-trips-head{margin-bottom:8px}.ke-trips-head h3{font-size:24px;line-height:1.2}
+.ke .ke-find-dates{display:flex;align-items:center;justify-content:center;gap:calc(var(--u) * 1.2);width:100%;max-width:calc(var(--u) * 36);min-height:var(--ctl);margin:calc(var(--u) * 1.6) auto 0;padding:calc(var(--u) * 1) calc(var(--u) * 1.2);border:var(--hair) solid var(--navy-40);border-radius:var(--r);background:transparent;color:var(--navy);font-size:var(--fs-s);text-decoration:none}
+.ke-trips{padding:calc(var(--u) * 2.4) var(--pad) calc(var(--u) * 4)}.ke-trips-head{margin-bottom:calc(var(--u) * .8)}.ke-trips-head h3{font-size:max(19px,calc(var(--u) * 2.4));line-height:1.2}
 /* Filter fields copy the live schedule page: underlined value, grey chevron that swaps on hover and rotates when open,
-   a navy line that draws in, and a white option panel that fades and drops 10px over 650ms. */
-.ke-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:12px}
+   a navy line that draws in, and a white option panel that fades and drops. */
+.ke-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:calc(var(--u) * 1.6);margin-top:calc(var(--u) * 1.2)}
 .ke-filters[data-mode=month]{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ke-filters[data-mode=month] [data-filter=month],.ke-filters[data-mode=month] [data-filter=year]{display:none}
 .ke-select{position:relative;min-width:0}
-.ke .ke-select-toggle{position:relative;display:flex;align-items:center;width:100%;min-height:44px;padding:10px 28px 10px 4px;border:0;border-radius:0;background:transparent;color:#000;font:400 14px/1.2 'Forma DJR Micro',Arial,sans-serif;text-align:left}
+.ke .ke-select-toggle{position:relative;display:flex;align-items:center;width:100%;min-height:max(40px,calc(var(--u) * 4.4));padding:calc(var(--u) * 1) calc(var(--u) * 2.8) calc(var(--u) * 1) calc(var(--u) * .4);border:0;border-radius:0;background:transparent;color:var(--navy);font:400 var(--fs-s)/1.2 'Forma DJR Micro',Arial,sans-serif;text-align:left}
 .ke-select-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ke-select-ic{position:absolute;right:0;top:50%;display:grid;width:22px;height:22px;margin-top:-11px;overflow:hidden;pointer-events:none;transition:transform .65s var(--ease)}
-.ke-select-ic svg{grid-area:1/1;width:100%;height:100%;transition:transform .6s ease}.ke-select-ic svg:first-child{transform:translateY(-100%)}
-@media(hover:hover) and (min-width:992px){.ke-select:hover .ke-select-ic svg:first-child{transform:none}.ke-select:hover .ke-select-ic svg:last-child{transform:translateY(100%)}}
-.ke-select.is-open .ke-select-ic{transform:rotate(180deg)}
-.ke-select-line{position:absolute;left:0;right:0;bottom:0;height:1px;overflow:hidden;background:rgba(0,0,0,.1);pointer-events:none}
-.ke-select-line span{display:block;height:100%;background:var(--navy);transform:scaleX(0);transform-origin:right;transition:transform .65s var(--ease)}
-.ke-select:hover .ke-select-line span,.ke-select.is-open .ke-select-line span,.ke-select.is-filled .ke-select-line span{transform:scaleX(1);transform-origin:left}
-.ke-select-opts{position:absolute;z-index:3;top:100%;left:0;display:grid;width:100%;min-width:170px;max-height:240px;overflow:auto;overscroll-behavior:contain;padding:8px;background:var(--white);border:1px solid rgba(0,0,0,.1);border-radius:4px;
-  opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-10px);transition:transform .65s var(--ease),opacity .65s var(--ease),visibility 0s .65s}
-.ke-select.is-open .ke-select-opts{opacity:1;visibility:visible;pointer-events:auto;transform:none;transition:transform .65s var(--ease),opacity .65s var(--ease),visibility 0s}
+.ke-select-ic{position:absolute;right:0;top:50%;display:grid;width:max(18px,calc(var(--u) * 2.2));height:max(18px,calc(var(--u) * 2.2));transform:translateY(-50%);overflow:hidden;pointer-events:none}
+.ke-select-ic svg{grid-area:1/1;width:100%;height:100%}.ke-select-ic svg:first-child{transform:translateY(-100%)}
+.ke-select.is-open .ke-select-ic{transform:translateY(-50%) rotate(180deg)}
+.ke-select-line{position:absolute;left:0;right:0;bottom:0;height:var(--hair);overflow:hidden;background:var(--navy-10);pointer-events:none}
+.ke-select-line span{display:block;height:100%;background:var(--navy);transform:scaleX(0);transform-origin:right}
+.ke-select.is-open .ke-select-line span,.ke-select.is-filled .ke-select-line span{transform:scaleX(1);transform-origin:left}
+.ke-select-opts{position:absolute;z-index:3;top:100%;left:0;display:grid;width:100%;min-width:max(150px,calc(var(--u) * 17));max-height:max(200px,calc(var(--u) * 24));overflow:auto;overscroll-behavior:contain;padding:calc(var(--u) * .8);background:var(--white);border:var(--hair) solid var(--navy-10);border-radius:var(--r);
+  opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-4px);transition:transform .16s var(--ease-out),opacity .16s var(--ease-out),visibility 0s .16s}
+.ke-select.is-open .ke-select-opts{opacity:1;visibility:visible;pointer-events:auto;transform:none;transition:transform .2s var(--ease-out),opacity .2s var(--ease-out),visibility 0s}
 .ke-filters [data-filter=year] .ke-select-opts{left:auto;right:0}
-.ke .ke-select-opt{display:block;width:100%;padding:10px 12px;border:0;border-radius:0;background:transparent;color:#000;font:400 14px/1.2 'Forma DJR Micro',Arial,sans-serif;text-align:left;white-space:nowrap;transition:background-color .3s ease}
-.ke .ke-select-opt:hover{background:var(--hover-white)}.ke .ke-select-opt[aria-selected=true]{background:var(--navy);color:var(--white)}
+.ke .ke-select-opt{display:block;width:100%;padding:calc(var(--u) * 1) calc(var(--u) * 1.2);border:0;border-radius:var(--r);background:transparent;color:var(--navy);font:400 var(--fs-s)/1.2 'Forma DJR Micro',Arial,sans-serif;text-align:left;white-space:nowrap}
+.ke .ke-select-opt[aria-selected=true]{background:var(--navy);color:var(--white)}
 .ke .ke-select-opt:focus-visible{outline:2px solid var(--navy);outline-offset:-2px}
-.ke .ke-clear-filters{margin-top:14px;padding:10px 0;border:0;background:transparent;color:var(--brown);font-size:12px;text-decoration:underline;text-underline-offset:4px}
-.ke-trip{display:grid;grid-template-columns:144px minmax(0,1fr) 42px;column-gap:18px;align-items:start;padding:28px 0;border-bottom:1px solid var(--line)}
-.ke-trip:last-child{border-bottom:0}.ke-trip-main{min-width:0}.ke-trip-heading{display:grid;gap:8px;margin-bottom:10px}.ke-trip-tags{display:flex;flex-wrap:wrap;gap:6px}
-/* Live schedule cards set the date as `.heading.h5`: Forma DJR Micro 500, 20px from tablet down. */
-.ke-trip h4{font:500 20px/1.4 'Forma DJR Micro',Arial,sans-serif;letter-spacing:0;margin:0}
-.ke-trip img{display:block;width:144px;height:104px;object-fit:cover;border-radius:4px;margin:0;background:var(--line)}
-.ke-status{display:inline-block;font-size:11px;font-weight:500;padding:5px 9px;border-radius:3px;background:var(--red-bg);color:var(--red)}
+.ke .ke-clear-filters{margin-top:calc(var(--u) * 1.4);font-size:var(--fs-s)}
+/* Drawer trips: the site schedule row (hairline above, no box), 3:2 cover, date as h5, nights right-aligned. */
+.ke-trip{display:grid;grid-template-columns:max(88px,calc(var(--u) * 12.8)) minmax(0,1fr) max(36px,calc(var(--u) * 4.4));column-gap:calc(var(--u) * 1.4);align-items:start;padding:calc(var(--u) * 2.4) 0;border-top:var(--hair) solid var(--line)}
+.ke-trip-main{min-width:0}.ke-trip-heading{display:grid;gap:calc(var(--u) * .8);margin-bottom:calc(var(--u) * 1)}.ke-trip-tags{display:flex;flex-wrap:wrap;gap:6px}
+.ke-trip h4{font:500 var(--fs-h5)/1.3 'Forma DJR Micro',Arial,sans-serif;letter-spacing:0;margin:0;font-variant-numeric:tabular-nums}
+.ke-trip img,.ke-sgroup-head img{background:var(--brown-20);color:transparent}
+.ke-trip img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;border-radius:var(--r);margin:0}
+.ke-status{display:inline-block;font-size:var(--fs-xs);font-weight:500;line-height:1.2;padding:calc(var(--u) * .6) calc(var(--u) * 1.2);border-radius:var(--r);background:var(--red-bg);color:var(--red)}
 .ke-status.available{background:var(--green-bg);color:var(--green)}.ke-status.tentative{background:var(--yellow-bg);color:var(--yellow)}
 /* Private charters keep the live schedule page's available green (above). Cabin bookings use a pastel Lemon Chiffon (brand #f7f0a3 at 60% on white)
    with Prussian Blue text (12:1), in the same borderless style. Never solid, saturated fills. */
 .ke-status.available.cabin{background:#faf6c8;color:#003357}
 .ke-marker[data-label-hidden] .ke-marker-label{display:none}
-/* Boat marker: cream silhouette with a soft navy shadow so it reads on sea and on beige land. It sits just above its
-   point (clear of a port's pin), rocks gently, and faces its direction of travel. */
+/* Boat marker: one navy silhouette everywhere (no rocking), faces its direction of travel, three wake rings under the hull. */
 .ke-boat{position:absolute;z-index:var(--layer-markers);left:0;top:0;width:0;height:0;pointer-events:none}
 .ke-boat-face{position:absolute;left:calc(var(--boat-w) / -2);bottom:calc(var(--boat-w) * -.18);display:block;width:var(--boat-w);transition:transform .6s var(--ease-out)}
 .ke{--boat-w:clamp(44px,3.6vw,64px)}
-.ke-boat-face{transition:transform .6s var(--ease-out)}
-/* Docked: a navy badge on the pin's top-right corner, like a notification dot, with the boat still rocking inside. */
-.ke-boat[data-docked] .ke-boat-face{left:calc(var(--pin) / 2 - 12px);bottom:calc(var(--pin) / 2 - 12px);display:grid;place-items:center;width:30px;height:30px;
-  border-radius:50%;background:var(--navy);box-shadow:0 0 0 1.5px var(--cream),0 2px 6px rgba(0,30,52,.4)}
-.ke-boat[data-docked] .ke-boat-hull{width:20px;filter:none}
-@media(max-width:767px){.ke-boat[data-docked] .ke-boat-face{width:26px;height:26px;left:calc(var(--pin) / 2 - 10px);bottom:calc(var(--pin) / 2 - 10px)}.ke-boat[data-docked] .ke-boat-hull{width:17px}}
 @media(max-width:767px){.ke{--boat-w:36px}}
+/* Docked: same boat, moored beside the pin on the side away from its name. */
+.ke-boat[data-docked] .ke-boat-face{left:calc(var(--pin) / 2 + 4px);bottom:calc(var(--boat-w) * -.24)}
+.ke-boat[data-docked][data-dock-side=left] .ke-boat-face{left:calc(var(--pin) / -2 - 4px - var(--boat-w))}
 .ke-boat[data-heading=west] .ke-boat-face{transform:scaleX(-1)}
-.ke-boat-hull{display:block;width:100%;height:auto;color:var(--cream);filter:drop-shadow(0 1px 1px rgba(0,30,52,.9)) drop-shadow(0 3px 6px rgba(0,30,52,.45));transform-origin:50% 85%;animation:ke-rock 3.6s ease-in-out infinite}
-/* Wake: thin cream rings spread from the waterline behind the stern and fade, so the boat reads as afloat. */
-.ke-boat-wake{position:absolute;left:0;top:calc(var(--boat-w) * .12);width:0;height:0}
-.ke-boat-wake i{position:absolute;left:calc(var(--boat-w) * -.6);top:calc(var(--boat-w) * -.14);width:calc(var(--boat-w) * 1.2);height:calc(var(--boat-w) * .28);border:1px solid rgba(242,235,227,.6);border-radius:50%;opacity:0;animation:ke-wake 4.5s cubic-bezier(.23,1,.32,1) infinite}
+.ke-boat-hull{position:relative;display:block;width:100%;height:auto;color:var(--navy);filter:drop-shadow(0 2px 3px rgba(0,51,87,.2))}
+.ke-boat-wake{position:absolute;left:50%;top:90%;width:0;height:0}
+.ke-boat-wake i{position:absolute;left:calc(var(--boat-w) * -.6);top:calc(var(--boat-w) * -.14);width:calc(var(--boat-w) * 1.2);height:calc(var(--boat-w) * .28);border:1px solid rgba(0,51,87,.45);border-radius:50%;opacity:0;animation:ke-wake 4.5s cubic-bezier(.23,1,.32,1) infinite}
 .ke-boat-wake i:nth-child(2){animation-delay:1.5s}
 .ke-boat-wake i:nth-child(3){animation-delay:3s}
-.ke-boat[data-docked] .ke-boat-wake{display:none}
-/* Place name under a floating boat: one word, same small caps style as the map's destination labels. */
-.ke-boat-place{position:absolute;left:50%;top:calc(var(--boat-w) * .36);transform:translateX(-50%);padding:3px 6px;border-radius:2px;background:rgba(0,30,52,.72);
-  color:var(--cream);font:500 10px/1 'Forma DJR Micro',Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
-.ke-boat-place:empty,.ke-boat[data-docked] .ke-boat-place{display:none}
 @keyframes ke-wake{0%{transform:scale(.45);opacity:.7}100%{transform:scale(1.35);opacity:0}}
-@keyframes ke-rock{0%,100%{transform:rotate(-3.5deg) translateY(0)}50%{transform:rotate(3deg) translateY(-1.5px)}}
 
-.ke-trip-main p{font-size:12px;line-height:1.5}.ke-trip-route{font-weight:500}
-/* Route stops with a map pin: quiet underline that turns navy on hover, like the site's text links. */
-.ke .ke-route-link{display:inline;padding:0;border:0;background:transparent;color:inherit;font:inherit;text-decoration:underline;text-decoration-color:var(--navy-40);text-decoration-thickness:1px;text-underline-offset:3px;transition:text-decoration-color .65s var(--ease),color .65s var(--ease)}
-.ke .ke-route-link:hover{color:var(--navy);text-decoration-color:var(--navy)}.ke .ke-route-link:focus-visible{outline:2px solid var(--navy);outline-offset:2px}.ke-trip-main .ke-activity{margin-top:4px;color:var(--muted)}
-.ke-nights{text-align:right;flex:none;font-size:11px;color:var(--muted);padding-top:2px}
-.ke-nights b{display:block;font:500 22px/1.2 'Forma DJR Deck',Arial,sans-serif;color:var(--navy)}
-.ke-book{display:inline-flex;align-items:center;justify-content:space-between;gap:20px;min-height:40px;margin-top:14px;padding:8px 12px;
-  color:var(--cream)!important;background:var(--navy);border:1px solid var(--navy);border-radius:4px;text-decoration:none;font-size:11px;
-  transition:background-color .45s var(--ease),color .45s var(--ease)}.ke-book:hover{background:var(--cream);color:var(--navy)!important}
-.ke-empty{margin-top:8px!important;font-size:14px;line-height:1.6;color:var(--muted)}
+.ke-trip-main p{font-size:var(--fs-s);line-height:1.4;color:var(--navy-80)}.ke-trip-main .ke-trip-route{font-weight:500;color:var(--navy)}
+.ke .ke-route-link{display:inline;font:inherit;color:inherit}
+.ke-trip-main .ke-activity{margin-top:calc(var(--u) * .4)}
+.ke-nights{text-align:right;flex:none;font-size:var(--fs-xs);color:var(--navy-80);font-variant-numeric:tabular-nums}
+.ke-nights b{display:block;font:500 var(--fs-h5)/1.3 'Forma DJR Micro',Arial,sans-serif;color:var(--navy)}
+.ke .ke-book{display:inline-flex;align-items:center;justify-content:space-between;gap:calc(var(--u) * 2);min-height:max(36px,calc(var(--u) * 4));margin-top:calc(var(--u) * 1.4);padding:calc(var(--u) * .8) calc(var(--u) * 1.2);
+  color:var(--cream);background:var(--navy);border:var(--hair) solid var(--navy);border-radius:var(--r);text-decoration:none;font-size:var(--fs-xs);font-weight:500}
+.ke-empty{margin-top:calc(var(--u) * .8)!important;font-size:var(--fs-s);line-height:1.5;color:var(--navy-80)}
 .ke-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 /* Schedule sidebar: always in the right-hand column; the destination drawer slides over it. */
-.ke-schedule{position:absolute;z-index:var(--layer-drawer);right:0;top:var(--ke-header,0px);bottom:0;display:flex;flex-direction:column;width:var(--drawer-width);color:var(--navy);background:var(--cream);
-  transition:transform .5s var(--ease-drawer),visibility 0s}
-/* Collapsed: the sidebar slides fully off and a site-style tab brings it back. iOS drawer curve, exit slightly faster than enter. */
-.ke{--side:var(--drawer-width);--ease-drawer:cubic-bezier(.32,.72,0,1)}
+.ke-schedule{position:absolute;z-index:var(--layer-drawer);right:0;top:var(--ke-header,0px);bottom:0;display:flex;flex-direction:column;width:var(--drawer-width);color:var(--navy);background:var(--panel);border-left:var(--hair) solid var(--navy-10);
+  transition:transform .45s var(--ease-drawer),visibility 0s}
+/* Collapsed: the sidebar slides fully off and a site-style tab brings it back. Site curve; exit slightly faster than enter. */
+.ke{--side:var(--drawer-width);--ease-drawer:var(--ease)}
 .ke[data-sidebar=collapsed]{--side:0px}
-.ke[data-sidebar=collapsed] .ke-schedule{transform:translateX(100%);visibility:hidden;transition:transform .4s var(--ease-drawer),visibility 0s .4s}
-.ke .ke-expand{position:absolute;z-index:var(--layer-chrome);right:24px;top:calc(var(--ke-header,0px) + 24px);height:44px;gap:10px;font-weight:400;font-size:15px;text-transform:none;transition:background-color .65s var(--ease),color .65s var(--ease),transform .16s var(--ease-out)}
-.ke-expand svg{width:18px;height:18px;flex:none}.ke .ke-expand:active{transform:scale(.97)}
+.ke[data-sidebar=collapsed] .ke-schedule{transform:translateX(100%);visibility:hidden;transition:transform .32s var(--ease-drawer),visibility 0s .32s}
+.ke .ke-expand{position:absolute;z-index:var(--layer-chrome);right:calc(var(--u) * 2.4);top:calc(var(--ke-header,0px) + var(--u) * 2.4);min-height:var(--ctl);display:inline-flex;align-items:center;gap:calc(var(--u) * .8);padding:0 calc(var(--u) * .4);border:0;background:transparent;color:var(--navy);font:500 max(14px,calc(var(--u) * 1.8))/1 'Forma DJR Micro',Arial,sans-serif;cursor:pointer;transition:transform .16s var(--ease-out)}
+.ke .ke-expand span{background:linear-gradient(currentColor,currentColor) 0 100%/0 var(--hair) no-repeat;padding-bottom:3px;transition:background-size .2s var(--ease-out)}
+.ke .ke-expand svg{width:max(14px,calc(var(--u) * 1.6));height:auto;transition:transform .2s var(--ease-out)}
+.ke .ke-expand:active{transform:scale(.97)}
+@media(hover:hover) and (pointer:fine){.ke .ke-expand:hover span{background-size:100% var(--hair)}.ke .ke-expand:hover svg{transform:translateX(3px)}}
 .ke[data-view=location] .ke-expand{display:none}
 .ke-schedule-bar{display:none}
-.ke-schedule-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--brown) var(--cream)}
-.ke-schedule-head{padding:24px 88px 4px 32px}.ke-schedule h2{font-size:36px;line-height:1}
-/* Collapse control mirrors the drawer's close button: same box, same spot. */
-.ke .ke-collapse{position:absolute;z-index:2;top:16px;right:24px;width:44px;height:44px;display:grid;place-items:center;padding:0;border:1px solid var(--line);border-radius:4px;background:var(--cream);color:var(--navy);transition:background-color .3s ease,color .3s ease,transform .16s var(--ease-out)}
-.ke-collapse svg{width:12px;height:12px}.ke .ke-collapse:hover{background:var(--navy);color:var(--cream)}
+.ke-schedule-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.ke-schedule-head{padding:calc(var(--u) * 2.4) calc(var(--pad) + var(--ctl) + var(--u) * 1.2) calc(var(--u) * .2) var(--pad)}.ke-schedule h2{font-size:var(--fs-title);line-height:1.1}
+.ke-collapse svg{width:max(11px,calc(var(--u) * 1.2));height:max(11px,calc(var(--u) * 1.2))}
 /* The chosen dates read as one quiet line under the title, replacing labelled fields. */
-.ke-range-line{display:flex;align-items:center;gap:6px;min-height:36px;margin-top:6px!important;font-size:14px;color:var(--muted)}
+.ke-range-line{display:flex;align-items:center;gap:calc(var(--u) * .6);min-height:calc(var(--u) * 3.2);margin-top:2px!important;font-size:var(--fs-s);color:var(--navy-80);font-variant-numeric:tabular-nums}
 .ke-range-line.is-set{color:var(--navy);font-weight:500}
-.ke .ke-range-line .ke-clear-range{margin-left:6px;padding:8px 0;font-weight:400}
-.ke-range{padding:8px 32px 16px;border-bottom:1px solid var(--line)}
-.ke-range-month{padding:0 14px;font:500 17px/1 'Forma DJR Deck',Arial,sans-serif;letter-spacing:.01em}
-.ke-range-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));row-gap:3px;max-width:304px;margin:auto}
+.ke .ke-range-line .ke-clear-range{margin-left:calc(var(--u) * .6);font-weight:400}
+.ke-range{padding:calc(var(--u) * .4) var(--pad) calc(var(--u) * 1.4);border-bottom:var(--hair) solid var(--line)}
+.ke-range-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));row-gap:3px;max-width:calc(var(--u) * 36);margin:auto}
 /* Range picker: the band between departure and return runs edge to edge; days sit as tiles on top of it. */
-.ke .ke-rday{display:grid;place-items:center;height:32px;padding:0;border:0;border-radius:0;background:transparent;color:var(--navy);font-size:12px;font-variant-numeric:tabular-nums;cursor:pointer}
-.ke-rday>span{display:grid;place-items:center;width:30px;height:30px;border-radius:4px;transition:background-color .2s var(--ease-out),color .2s var(--ease-out),box-shadow .2s var(--ease-out)}
-.ke-rday.sailing>span{background:var(--green-bg);color:var(--green)}
-.ke .ke-rday:disabled{color:rgba(0,51,87,.28);cursor:default}
+.ke .ke-rday-pad{display:block;height:max(26px,calc(var(--u) * 3.6))}
+.ke .ke-rday{display:grid;place-items:center;height:max(26px,calc(var(--u) * 3.6));padding:0;border:0;border-radius:0;background:transparent;color:var(--navy);font-size:var(--fs-xs);font-variant-numeric:tabular-nums;cursor:pointer}
+.ke-rday>span{display:grid;place-items:center;width:max(24px,calc(var(--u) * 3.4));height:max(24px,calc(var(--u) * 3.4));border-radius:var(--r);transition:background-color .15s var(--ease-out),color .15s var(--ease-out),transform .16s var(--ease-out)}
+/* Day tiles carry the destination calendar's status colours; past days stay muted, never red. */
+.ke-rday.available>span{background:var(--green-bg);color:var(--green)}.ke-rday.unavailable>span{background:var(--red-bg);color:var(--red)}.ke-rday.tentative>span{background:var(--yellow-bg);color:var(--yellow)}
+.ke .ke-rday:disabled{color:var(--navy-20);cursor:default}
 .ke .ke-rday.is-inside,.ke .ke-rday.is-preview{background:var(--brown-20)}
 .ke-rday.is-inside>span,.ke-rday.is-preview>span{background:transparent}
 .ke .ke-rday.is-start.has-band{background:linear-gradient(90deg,transparent 50%,var(--brown-20) 50%)}
 .ke .ke-rday.is-end.has-band,.ke .ke-rday.is-preview-end{background:linear-gradient(90deg,var(--brown-20) 50%,transparent 50%)}
 .ke-rday.is-start>span,.ke-rday.is-end>span,.ke-rday.is-preview-end>span{background:var(--navy);color:var(--white)}
-@media(hover:hover){.ke-rday:not(:disabled):not(.is-start):not(.is-end):hover>span{box-shadow:inset 0 0 0 1px var(--navy)}}
 .ke-rday:active:not(:disabled)>span{transform:scale(.94)}
 .ke-rday.is-today>span{font-weight:600;text-decoration:underline;text-underline-offset:3px}
-.ke .ke-clear-range{padding:10px 0;border:0;background:transparent;color:var(--brown);font-size:12px;text-decoration:underline;text-underline-offset:4px}
-.ke-schedule-results{padding:20px 32px 40px}.ke-schedule-results h3{font-size:24px;line-height:1.2}
-.ke-sgroup{padding:12px 0}
-/* Region headers are thin photo banners (the region's bespoke-expeditions hero), name and count set on a navy fade for contrast. */
-.ke .ke-sgroup-head{position:relative;isolation:isolate;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;width:100%;height:76px;padding:12px 14px;overflow:hidden;border:0;border-radius:4px;background:var(--navy);color:var(--white);text-align:left;transition:transform .16s var(--ease-out)}
+.ke .ke-clear-range{font-size:var(--fs-xs)}
+.ke-schedule-results{padding:calc(var(--u) * 1.6) var(--pad) calc(var(--u) * 4)}.ke-schedule-results h3{font-size:max(19px,calc(var(--u) * 2.4));line-height:1.2}
+.ke-sgroup{margin-top:calc(var(--u) * 2.4);border-radius:var(--r-lg,calc(var(--u) * .8));background:var(--cream);overflow:hidden}
+.ke-sgroup.is-empty{background:transparent}
+.ke .ke-sgroup:not(.is-empty) .ke-sgroup-head{border-radius:0}
+.ke .ke-sgroup .ke-srow{padding-inline:calc(var(--u) * 1.6)}
+/* Region headers are thin photo banners (the region's bespoke-expeditions hero), name and count in white on a navy fade. */
+.ke .ke-sgroup-head{position:relative;isolation:isolate;display:flex;align-items:flex-end;justify-content:space-between;gap:calc(var(--u) * 1.2);width:100%;height:max(64px,calc(var(--u) * 8));padding:calc(var(--u) * 1.2) calc(var(--u) * 1.4);overflow:hidden;border:0;border-radius:var(--r-lg);background:var(--navy);color:var(--white);text-align:left;transition:transform .16s var(--ease-out)}
 .ke-sgroup-head img{position:absolute;z-index:-2;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 55%;transition:transform .9s var(--ease-out)}
-.ke-sgroup-head::before{content:'';position:absolute;z-index:-1;inset:0;background:linear-gradient(0deg,rgba(0,30,52,.78) 0%,rgba(0,30,52,.3) 55%,rgba(0,30,52,0) 100%)}
-@media(hover:hover){.ke-sgroup-head:hover img{transform:scale(1.04)}}
+.ke-sgroup-head::before{content:'';position:absolute;z-index:-1;inset:0;background:linear-gradient(0deg,rgba(0,51,87,.88) 0%,rgba(0,51,87,.45) 55%,rgba(0,51,87,.05) 100%)}
 .ke .ke-sgroup-head:active{transform:scale(.98)}
-.ke-sgroup-name{font:500 20px/1.1 'Forma DJR Deck',Arial,sans-serif;letter-spacing:.01em}
-.ke-sgroup-count{flex:none;font-size:12px;font-variant-numeric:tabular-nums;color:rgba(255,255,255,.88)}
-.ke-sgroup.is-empty .ke-sgroup-count{padding:3px 6px;border-radius:2px;background:var(--red-bg);color:var(--red)}
+.ke-sgroup-name{font:500 max(16px,calc(var(--u) * 2))/1.15 'Forma DJR Deck',Arial,sans-serif;letter-spacing:.01em}
+.ke-sgroup-count{flex:none;max-width:42%;font-size:var(--fs-xs);font-weight:400;line-height:1.3;text-align:right;font-variant-numeric:tabular-nums;color:var(--white)}
 .ke-sgroup.is-empty .ke-sgroup-head img{filter:saturate(.35)}
-.ke .ke-srow{display:grid;gap:4px;width:100%;margin-top:8px;padding:12px 14px;border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--navy);text-align:left;transition:background-color .45s var(--ease),border-color .45s var(--ease)}
-@media(hover:hover){.ke .ke-srow:hover{background:var(--brown-20);border-color:var(--brown-20)}}
-/* Press feedback on the pressable rows and buttons of the sidebar. */
-.ke .ke-srow:active,.ke .ke-near button:active,.ke .ke-collapse:active{transform:scale(.97)}
-.ke .ke-srow,.ke .ke-near button{transition:background-color .45s var(--ease),border-color .45s var(--ease),transform .16s var(--ease-out)}
-.ke-srow-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.ke-srow-top b{font-weight:500;font-size:15px}
-.ke-srow-nights{flex:none;font-size:12px;color:var(--muted)}.ke-srow-route{font-size:12px;color:var(--muted)}.ke-srow .ke-status{justify-self:start;margin-top:4px}
-.ke-near{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:4px}.ke-near>span{margin-right:4px;font-size:12px;color:var(--muted)}
-.ke .ke-near button{min-height:36px;padding:7px 10px;border:1px solid var(--navy-40);border-radius:4px;background:transparent;color:var(--navy);font-size:12px;transition:background-color .3s ease}
-@media(hover:hover){.ke .ke-near button:hover{background:var(--brown-20)}}
-/* Map: region names carry a charter count; with dates chosen, regions without a sailing dim and say so in a pale red tag. */
-.ke-region-count{display:block;margin-top:5px;font:400 11px/1.2 'Forma DJR Micro',Arial,sans-serif;letter-spacing:.02em;color:rgba(242,235,227,.8)}
-.ke-region-count:empty{display:none}
-.ke-anchor[data-unavailable] .ke-region-count{width:fit-content;margin:6px auto 0;padding:3px 6px;border-radius:2px;background:var(--red-bg);color:var(--red)}
-.ke-anchor[data-unavailable] .ke-pin,.ke .ke-region-list [data-unavailable]{opacity:.55}
-.ke-anchor[data-unavailable] .ke-region .ke-marker-label{background:rgba(0,30,52,.72)}
+/* Sidebar trips: site schedule rows, hairline above, no box. */
+.ke .ke-srow{display:grid;gap:calc(var(--u) * .4);width:100%;padding:calc(var(--u) * 1.6) 0;border:0;border-top:var(--hair) solid var(--line);border-radius:0;background:transparent;color:var(--navy);text-align:left;transition:transform .16s var(--ease-out)}
+.ke-sgroup-head+.ke-srow{border-top:0}
+.ke-sgroup .ke-srow+.ke-srow{border-top-color:var(--navy-10)}
+.ke-srow-top{display:flex;align-items:baseline;justify-content:space-between;gap:calc(var(--u) * 1.2)}.ke-srow-top b{font-weight:500;font-size:max(14px,calc(var(--u) * 1.8));font-variant-numeric:tabular-nums}
+.ke-srow-nights{flex:none;font-size:var(--fs-xs);color:var(--navy-80);font-variant-numeric:tabular-nums}.ke-srow-route{font-size:var(--fs-xs);color:var(--navy-80)}.ke-srow .ke-status{justify-self:start;margin-top:calc(var(--u) * .4)}
+/* Nearest dates: one line of underlined text links separated by a middle dot. */
+.ke-near{margin-top:calc(var(--u) * .4);font-size:var(--fs-xs);line-height:1.6;color:var(--navy-80);font-variant-numeric:tabular-nums}
+.ke-near>span:first-child{margin-right:calc(var(--u) * .6)}
+.ke-near-sep{margin:0 calc(var(--u) * .6)}
+.ke .ke-near button{display:inline;font:inherit;line-height:inherit}
+/* With dates chosen, regions without a sailing fade to navy at half strength (no off-palette greys). */
+.ke-anchor[data-unavailable] .ke-pin{background:var(--red-bg);border-color:var(--red-line);color:var(--red)}
+.ke .ke-anchor[data-unavailable] .ke-marker-label.ke-btn{background:var(--red-bg);border-color:var(--red-line);color:var(--red)}
+.ke-anchor[data-unavailable] .ke-region .ke-marker-label,.ke .ke-region-list [data-unavailable]{color:var(--red)}
 @media(min-width:768px){
   .ke-nav{left:calc((100% - var(--side))/2);max-width:calc(100% - var(--side) - 32px)}
-  .ke-footer{right:calc(var(--side) + var(--gutter))}
-  .ke[data-view=region] .ke-footer{left:calc((100% - var(--side))/2);max-width:calc(100% - var(--side) - 48px);transition:left .9s var(--ease)}
   .ke[data-view=location] .ke-nav{left:calc((100% - var(--drawer-width))/2);max-width:calc(100% - var(--drawer-width) - 32px)}
 }
 .ke-calibration{position:absolute;z-index:var(--layer-drawer);left:16px;right:16px;top:calc(var(--ke-header,0px) + 16px);background:var(--cream);color:var(--navy);padding:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-.ke-calibration button{min-height:44px;padding:8px 16px;border:1px solid var(--navy);background:transparent;border-radius:4px}
+.ke-calibration button{min-height:44px;padding:8px 16px;border:1px solid var(--navy);background:transparent;border-radius:var(--r)}
 .ke-calibration textarea{width:100%;height:160px;font-size:12px}.ke[data-calibrate=true] .ke-stage{cursor:crosshair}
 .ke[data-calibrate=true] .ke-markers,.ke[data-calibrate=true] .ke-marker{pointer-events:none}
-@media(min-width:1600px){.ke{--drawer-width:560px}}
-@media(max-width:1200px){.ke{--drawer-width:460px}.ke-region .ke-marker-label{font-size:16px;padding:8px 11px}.ke-region-count{font-size:10px}}
-@media(max-width:991px){.ke{--gutter:40px;--drawer-width:420px;--site-rem:1.1990407674vw;--pin-pad:calc(var(--site-rem) * .8);--pin-icon:calc(var(--site-rem) * 1.8)}.ke .ke-btn{font-size:14px}.ke-intro{max-width:320px}.ke-trip{grid-template-columns:116px minmax(0,1fr) 38px;column-gap:14px}.ke-trip img{width:116px;height:88px}}
+/* Short desktop panes (laptops at high OS scaling): tighten the sidebar so the whole month and its legend sit above the fold. */
+@media(min-width:768px) and (max-height:820px){
+  .ke-schedule-head,.ke-drawer-head{padding-top:calc(var(--u) * 1.6)}.ke .ke-collapse,.ke .ke-close{top:calc(var(--u) * 1)}
+  .ke-range-line{min-height:calc(var(--u) * 2.8)}.ke-range{padding-bottom:calc(var(--u) * 1)}.ke .ke-calendar-arrow,.ke .ke-period{height:max(30px,calc(var(--u) * 3.4));min-height:0}
+  .ke-weekday{line-height:calc(var(--u) * 2)}.ke .ke-rday,.ke .ke-rday-pad{height:max(25px,calc(var(--u) * 3.2))}.ke-rday>span{width:max(23px,calc(var(--u) * 3));height:max(23px,calc(var(--u) * 3))}.ke-legend{margin-top:calc(var(--u) * .6)}
+  .ke-day{height:max(24px,calc(var(--u) * 3))}.ke .ke-availability-view{min-height:40px;padding:calc(var(--u) * .8) calc(var(--u) * 1)}.ke-intro p{margin-top:10px}
+}
+@media(max-width:991px){.ke{--gutter:40px;--site-rem:1.1990407674vw;--pin-pad:calc(var(--site-rem) * .8);--pin-icon:calc(var(--site-rem) * 1.8)}.ke-intro{max-width:320px}}
 @media(max-width:767px){
-  .ke{--gutter:24px;--drawer-width:100%;--ke-title-gap:16px}
+  .ke{--u:2.3255814vw;--gutter:24px;--drawer-width:100%;--ke-title-gap:16px;--fs-b:max(13px,calc(var(--u) * 1.5))}
   .ke-nav{bottom:40px;gap:8px;left:16px;right:16px;width:auto;max-width:none;transform:none}
   .ke-region-options{min-width:min(290px,calc(100vw - 32px))}
-  .ke-ocean::before{background-position:58% center;opacity:.045}
-  .ke[data-view=world] .ke-footer,.ke[data-view=world] .ke-region .ke-marker-label{display:none}
+  .ke[data-view=world] .ke-region .ke-marker-label{display:none}
   .ke-region .ke-pin svg{display:none}.ke-region .ke-pin-num{display:block}
   .ke[data-view=world] .ke-region-list{position:absolute;z-index:var(--layer-chrome);left:16px;right:16px;bottom:16px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  .ke-region-list .ke-btn{justify-content:flex-start;padding:11px 10px;font-size:11px;white-space:normal;text-align:left;line-height:1.15}
+  .ke-region-list .ke-btn{justify-content:flex-start;padding:calc(var(--u) * 1.2) calc(var(--u) * 1.1);font-size:max(11px,calc(var(--u) * 1.2));white-space:normal;text-align:left;line-height:1.15}
   .ke-region-list .ke-flip{text-align:left}
-  .ke-nav::after{content:'';position:absolute;z-index:-2;left:50%;bottom:-40px;width:100vw;height:180px;transform:translateX(-50%);pointer-events:none;background:linear-gradient(0deg,rgba(0,0,0,.72) 0%,rgba(0,0,0,.38) 42%,rgba(0,0,0,0) 100%)}
-  .ke-nav .ke-btn{font-size:12px;padding:10px 12px}.ke .ke-region-option{font-size:12px}
-  .ke{--site-rem:2.3255813953vw;--pin-pad:calc(var(--site-rem) * .8);--pin-icon:calc(var(--site-rem) * 1.8)}
+  .ke .ke-nav .ke-btn{font-size:max(12px,calc(var(--u) * 1.3));min-height:44px}.ke .ke-region-option{font-size:max(12px,calc(var(--u) * 1.3));min-height:40px}
+  .ke{--site-rem:2.3255813953vw;--pin-pad:4px;--pin-icon:max(12px,calc(var(--u) * 2.2) - 10px)}.ke .ke-pin-num{font-size:11px}
   .ke-intro{top:calc(var(--ke-header,0px) + 20px);max-width:260px}.ke-intro h1{font-size:34px}.ke-intro p{font-size:13px;max-width:245px;margin-top:12px}
-  .ke-region .ke-marker-label{font-size:15px;padding:7px 9px}
-  .ke-marker-label.ke-btn{font-size:12px;padding:9px 12px}
-  .ke-footer{left:16px;right:16px;bottom:16px;gap:12px}.ke-context{padding:8px 12px;max-width:240px;font-size:11px}
-  .ke-context strong{font-size:12px}.ke-footer a{font-size:10px;max-width:100px}
-  .ke[data-view=region] .ke-footer{top:calc(var(--ke-header,0px) + var(--ke-title-gap));left:50%;right:auto;width:calc(100% - 48px);bottom:auto}.ke[data-view=region] .ke-context{max-width:none;padding:0}
-  .ke-drawer{top:auto;height:65%;width:100%;transform:translateY(100%);border-radius:8px 8px 0 0}.ke-drawer.is-open{transform:translateY(0)}
-  .ke-drawer-head{padding:20px 72px 8px 24px}.ke-discover{margin:0 24px}.ke-drawer h2{font-size:30px}.ke-close{top:12px;right:16px}
-  .ke-day{height:30px}.ke-weekday{line-height:18px}.ke-calendar-top{margin-bottom:2px}.ke-legend{margin-top:8px}
-  .ke-availability-controls{padding:4px 24px 16px}.ke .ke-availability-view{font-size:13px;padding:10px;min-height:64px}
-  .ke-calendar{padding:12px 24px 16px}.ke-trips{padding:20px 24px 32px}.ke-trips>h3{margin-bottom:4px}
-  .ke-trip{grid-template-columns:104px minmax(0,1fr) 34px;column-gap:12px;padding:20px 0}.ke-trip img{width:104px;height:78px}.ke-trip h4{font-size:18px}
-  .ke-trip-main p{font-size:11px}.ke-status{font-size:10px}.ke-filters{gap:10px}.ke .ke-select-toggle,.ke .ke-select-opt{font-size:13px}.ke-book{min-height:36px;margin-top:10px;padding:7px 10px}
-  .ke[data-view=location] .ke-footer{display:none}
-  /* The map strip above the drawer is too short for every neighbouring label plus the controls and arrows,
+  .ke-drawer{top:auto;height:65%;width:100%;transform:translateY(100%);border-radius:var(--r-lg) var(--r-lg) 0 0}.ke-drawer.is-open{transform:translateY(0)}
+  .ke .ke-rday,.ke .ke-rday-pad{height:40px}.ke-day{height:max(30px,calc(var(--u) * 3.4))}
+  .ke .ke-availability-view{min-height:max(52px,calc(var(--u) * 6.4))}
+  .ke-trip{grid-template-columns:max(92px,calc(var(--u) * 11.4)) minmax(0,1fr) max(34px,calc(var(--u) * 3.8));column-gap:calc(var(--u) * 1.2)}
+  .ke .ke-near button{padding-block:calc(var(--u) * 1)}
+    /* The map strip above the drawer is too short for every neighbouring label plus the controls and arrows,
      so only the open destination is named; the others stay as tappable pins. */
   .ke[data-view=location] .ke-marker:not(.ke-region)[aria-pressed=false] .ke-marker-label{display:none}
   .ke[data-view=location] .ke-nav{z-index:5;display:grid;left:16px;right:16px;top:calc(var(--ke-header,0px) + 6px);bottom:auto;width:auto;max-width:none;transform:none;gap:8px}
-  .ke[data-view=location] .ke-nav::after{display:none}
   .ke[data-view=location] .ke-region-toggle{width:100%;min-height:44px;justify-content:space-between}
   .ke[data-view=location] .ke-region-current{overflow:hidden;text-overflow:ellipsis}
   .ke[data-view=location] .ke-region-options{top:calc(100% + 8px);bottom:auto;max-height:55dvh;overflow:auto;min-width:min(290px,calc(100vw - 32px))}
   .ke[data-view=location] .ke-region-toggle .ke-chevron{transform:none}
   .ke[data-view=location] .ke-region-toggle[aria-expanded=true] .ke-chevron{transform:rotate(180deg)}
-  .ke-nav .ke-btn{min-height:44px}
-  .ke[data-view=region] .ke-context strong{font-size:28px}.ke-picker-year .ke-calendar-arrow{width:32px;height:32px}
-  .ke-destination-nav{left:8px;right:8px;top:calc((35% + var(--ke-header,0px) + 60px)/2)}.ke-destination-nav button{width:44px;height:44px;font-size:27px;background:rgba(0,30,52,.62)}
+  .ke-destination-nav{left:8px;right:8px;top:calc((35% + var(--ke-header,0px) + 60px)/2)}
 }
 /* Phones: the schedule is a bottom sheet whose bar (dates + count) stays visible; map controls sit above it. */
 @media(max-width:767px){
   .ke{--sheet-bar:56px}
-  .ke-schedule{top:auto;height:min(82%,680px);width:100%;border-radius:8px 8px 0 0;box-shadow:0 -8px 24px rgba(0,30,52,.18);transform:translateY(calc(100% - var(--sheet-bar)));transition:transform .72s var(--ease)}
+  .ke-schedule{top:auto;height:min(82%,680px);width:100%;border-radius:var(--r-lg) var(--r-lg) 0 0;box-shadow:0 -8px 24px rgba(0,51,87,.14);transform:translateY(calc(100% - var(--sheet-bar)));transition:transform .45s var(--ease-drawer)}
   .ke[data-schedule=open] .ke-schedule{transform:none}
   .ke[data-view=location] .ke-schedule{transform:translateY(100%)}
-  .ke .ke-schedule-bar{display:flex;flex:none;align-items:center;gap:12px;width:100%;height:var(--sheet-bar);padding:0 20px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--navy);font:500 14px/1.2 'Forma DJR Micro',Arial,sans-serif;text-align:left}
-  .ke-schedule-bar-dates{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .ke-schedule-bar-count{flex:none;font-weight:400;font-size:12px;color:var(--muted)}
+  .ke .ke-schedule-bar{display:flex;flex:none;align-items:center;gap:12px;width:100%;height:var(--sheet-bar);padding:0 20px;border:0;border-bottom:var(--hair) solid var(--line);background:transparent;color:var(--navy);font:500 14px/1.2 'Forma DJR Micro',Arial,sans-serif;text-align:left}
+  .ke-schedule-bar-dates{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .ke-schedule-bar-count{flex:none;max-width:55%;font-weight:400;font-size:12px;line-height:1.2;text-align:right;color:var(--navy-80)}
   .ke-schedule-bar .ke-chevron{transform:rotate(180deg)}.ke-schedule-bar[aria-expanded=true] .ke-chevron{transform:none}
-  .ke-schedule-head{padding:12px 24px 0}.ke-schedule h2,.ke .ke-collapse,.ke .ke-expand{display:none}.ke-range-line{justify-content:flex-end;min-height:0;margin-top:0!important}.ke-range-text{display:none}
-  .ke-range{padding:6px 24px 12px}.ke .ke-rday{height:34px}.ke-schedule-results{padding:16px 24px 32px}.ke-schedule-results h3{font-size:20px}
+  .ke-schedule-head{padding:12px var(--pad) 0}.ke-schedule h2,.ke .ke-collapse,.ke .ke-expand{display:none}.ke-range-line{justify-content:flex-end;min-height:0;margin-top:0!important}.ke-range-text{display:none}
+  .ke-range{padding:6px var(--pad) 12px}
   .ke[data-view=world] .ke-region-list{bottom:calc(var(--sheet-bar) + 12px)}
   .ke[data-view=region] .ke-nav{bottom:calc(var(--sheet-bar) + 20px)}
 }
-@media(prefers-reduced-motion:reduce){.ke *{animation:none!important;transition:none!important}.ke-vignette-shade{opacity:.28}}
+/* High-frequency controls: short ease-out colour changes and a press scale. */
+.ke .ke-calendar-arrow,.ke .ke-period,.ke .ke-picker-month,.ke .ke-region-option,.ke .ke-select-opt,.ke .ke-book,.ke .ke-availability-view,.ke .ke-find-dates,.ke .ke-near button{transition:background-color var(--t-ui) var(--ease-out),color var(--t-ui) var(--ease-out),border-color var(--t-ui) var(--ease-out),background-size .2s var(--ease-out),transform .16s var(--ease-out)}
+.ke .ke-btn:active,.ke .ke-calendar-arrow:active:not(:disabled),.ke .ke-period:active,.ke .ke-picker-month:active:not(:disabled),.ke .ke-close:active,.ke .ke-collapse:active,.ke .ke-book:active,.ke .ke-availability-view:active,.ke .ke-find-dates:active,.ke .ke-destination-nav button:active,.ke .ke-srow:active,.ke .ke-select-opt:active,.ke .ke-region-option:active{transform:scale(.97)}
+.ke .ke-chevron,.ke .ke-select-ic,.ke .ke-select-ic svg,.ke .ke-select-line span{transition:transform .2s var(--ease-out)}
+/* Hover only where a fine pointer can hover. */
+@media(hover:hover) and (pointer:fine){
+  .ke .ke-btn:hover{background:var(--navy);color:var(--white)}
+  .ke-btn:hover .ke-flip-txt{transform:translateY(calc(-100% - var(--flip-gap)))}
+  .ke-marker:hover .ke-pin{border-color:var(--brown-80);background:var(--brown-80);color:var(--cream);box-shadow:rgba(132,104,69,.5) 0 calc(var(--u) * 1.5) calc(var(--u) * 2)}
+  .ke-anchor .ke-marker:hover .ke-marker-label{color:var(--navy)}
+  .ke .ke-marker:hover .ke-marker-label.ke-btn{background:var(--navy);color:var(--white)}
+  .ke-marker:hover .ke-marker-label .ke-flip-txt{transform:translateY(calc(-100% - var(--flip-gap)))}
+  .ke .ke-region-option:not([aria-current]):hover,.ke .ke-select-opt:not([aria-selected=true]):hover{background:var(--hover-white)}
+  .ke .ke-destination-nav button:hover,.ke .ke-close:hover,.ke .ke-collapse:hover{background:var(--navy);border-color:var(--navy);color:var(--white)}
+  .ke .ke-discover:hover,.ke .ke-near button:hover,.ke .ke-route-link:hover,.ke .ke-clear-range:hover,.ke .ke-clear-filters:hover{background-size:100% var(--hair),100% var(--hair)}
+  .ke .ke-availability-view:not([aria-pressed=true]):hover,.ke .ke-find-dates:hover{background:var(--brown-20);border-color:var(--navy)}
+  .ke .ke-calendar-arrow:hover:not(:disabled),.ke-period:hover{background:var(--brown-20)}
+  .ke-picker-month:not(.is-selected):hover:not(:disabled){background:var(--brown-20);border-color:var(--brown-20)}
+  .ke-select:hover .ke-select-line span{transform:scaleX(1);transform-origin:left}
+  .ke-select:hover .ke-select-ic svg:first-child{transform:none}.ke-select:hover .ke-select-ic svg:last-child{transform:translateY(100%)}
+  .ke .ke-book:hover{background:var(--cream);color:var(--navy)}
+  .ke-rday:not(:disabled):not(.is-start):not(.is-end):hover>span{outline:var(--hair) solid var(--navy);outline-offset:calc(var(--hair) * -1)}
+  .ke-sgroup-head:hover img{transform:scale(1.04)}
+  .ke .ke-srow:hover b{text-decoration:underline;text-decoration-thickness:var(--hair);text-underline-offset:3px}
+}
+.ke[data-input=key] *{transition:none!important}
+@media(prefers-reduced-motion:reduce){.ke *{animation:none!important;transition:none!important}}
+
+/* Quick dates under the collapsed tab: a field that opens presets + two months (draft, Apply). Desktop only. */
+.ke-quick{position:absolute;z-index:var(--layer-chrome);right:calc(var(--u) * 2.4);top:calc(var(--ke-header,0px) + var(--u) * 2.4 + var(--ctl) + var(--u) * .4);display:flex;flex-direction:column;align-items:flex-end}
+.ke[data-view=location] .ke-quick{display:none}
+.ke .ke-quick-trigger{display:inline-flex;align-items:center;gap:calc(var(--u) * 1);min-height:max(36px,calc(var(--u) * 4.4));padding:0 calc(var(--u) * 1.4);border:var(--hair) solid var(--navy-20);border-radius:var(--r);background:var(--panel);color:var(--navy);
+  font:400 max(13px,calc(var(--u) * 1.6))/1 'Forma DJR Micro',Arial,sans-serif;font-variant-numeric:tabular-nums;transition:border-color var(--t-ui) var(--ease-out),transform .16s var(--ease-out)}
+.ke .ke-quick-trigger svg{width:max(10px,calc(var(--u) * 1.2));transition:transform .2s var(--ease-out)}
+.ke .ke-quick-trigger[aria-expanded=true] svg{transform:rotate(180deg)}
+.ke .ke-quick-trigger:active{transform:scale(.97)}
+.ke-quick-pop{position:absolute;top:calc(100% + calc(var(--u) * .8));right:0;display:grid;grid-template-columns:auto auto;background:var(--panel);color:var(--navy);
+  border:var(--hair) solid var(--navy-10);border-radius:var(--r-lg);box-shadow:0 calc(var(--u) * 1.6) calc(var(--u) * 4.8) rgba(0,51,87,.14);overflow:hidden;
+  transform-origin:top right;transition:opacity .18s var(--ease-out),transform .18s var(--ease-out)}
+@starting-style{.ke-quick-pop{opacity:0;transform:scale(.97) translateY(-4px)}}
+.ke-quick-presets{display:flex;flex-direction:column;gap:2px;padding:calc(var(--u) * 1.2);border-right:var(--hair) solid var(--navy-10);min-width:calc(var(--u) * 17)}
+.ke .ke-quick-presets button{padding:calc(var(--u) * 1) calc(var(--u) * 1.2);border:0;border-radius:var(--r);background:transparent;color:var(--navy);text-align:left;font:400 max(13px,calc(var(--u) * 1.5))/1.2 'Forma DJR Micro',Arial,sans-serif;transition:background-color var(--t-ui) var(--ease-out)}
+.ke .ke-quick-presets button[aria-pressed=true]{background:var(--cream);font-weight:500}
+.ke-quick-main{display:grid;gap:calc(var(--u) * 1.6);padding:calc(var(--u) * 1.6) calc(var(--u) * 2)}
+.ke-quick-fields{display:flex;align-items:center;gap:calc(var(--u) * 1);font-size:max(13px,calc(var(--u) * 1.5));color:var(--navy-60)}
+.ke-quick-field{min-width:calc(var(--u) * 14);padding:calc(var(--u) * .9) calc(var(--u) * 1.2);border:var(--hair) solid var(--navy-20);border-radius:var(--r);color:var(--navy);font-variant-numeric:tabular-nums}
+.ke-quick-field.is-empty{color:var(--navy-60)}
+.ke-quick-months{position:relative;display:grid;grid-template-columns:repeat(2,calc(var(--u) * 30));gap:calc(var(--u) * 3.2);padding:0 calc(var(--u) * 1)}
+.ke-quick-month b{display:block;margin-bottom:calc(var(--u) * .8);text-align:center;font:500 max(14px,calc(var(--u) * 1.7))/1.4 'Forma DJR Micro',Arial,sans-serif}
+.ke .ke-quick-grid{max-width:none;margin:0}
+.ke .ke-quick-step{position:absolute;top:0;display:grid;place-items:center;width:max(28px,calc(var(--u) * 3.2));height:max(28px,calc(var(--u) * 3.2));padding:0;border:0;border-radius:var(--r);background:transparent;color:var(--navy);font-size:max(16px,calc(var(--u) * 2))}
+.ke .ke-quick-step[data-quick-step="-1"]{left:calc(var(--u) * -1)}.ke .ke-quick-step[data-quick-step="1"]{right:calc(var(--u) * -1)}
+.ke .ke-quick-step:disabled{color:var(--navy-20);cursor:default}
+.ke-quick-foot{display:flex;justify-content:flex-end;align-items:center;gap:calc(var(--u) * 1.6);padding-top:calc(var(--u) * 1.2);border-top:var(--hair) solid var(--navy-10)}
+.ke .ke-quick-clear{padding:calc(var(--u) * .6) 0;border:0;background:transparent;color:var(--navy);font:500 max(13px,calc(var(--u) * 1.5))/1 'Forma DJR Micro',Arial,sans-serif}
+.ke .ke-quick-apply{background:var(--navy);color:var(--white);border-color:var(--navy)}
+@media(hover:hover) and (pointer:fine){
+  .ke .ke-quick-trigger:hover{border-color:var(--navy-40)}
+  .ke .ke-quick-presets button:hover{background:var(--hover-white)}
+  .ke .ke-quick-presets button[aria-pressed=true]:hover{background:var(--cream)}
+  .ke .ke-quick-step:not(:disabled):hover{background:var(--hover-white)}
+  .ke .ke-quick-clear:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:var(--hair)}
+  .ke .ke-quick-apply:hover{background:#042741}
+}
+@media(prefers-reduced-motion:reduce){.ke-quick-pop{transition:opacity .15s ease}@starting-style{.ke-quick-pop{transform:none}}}
+@media(max-width:767px){.ke .ke-quick{display:none}}
+
+/* ---- Consistency layer (27 Oct): one type scale, one control height, one button voice, region names right of pins. ----
+   Type: meta 12 (weekdays, legend, routes, nights, counts, status, links) · ui 13.3 (buttons, selects, options) ·
+   data 15 (trip dates) · title 16.7 (month names, banner names, map names) · h3 20 · h2 26.7 (at 1600px). */
+.ke{--t-meta:max(12px,calc(var(--u) * 1.4));--t-ui:max(13px,calc(var(--u) * 1.6));--t-data:max(14px,calc(var(--u) * 1.8));--t-title:max(16px,calc(var(--u) * 2))}
+.ke .ke-weekday,.ke .ke-legend,.ke .ke-srow-route,.ke .ke-srow-nights,.ke .ke-sgroup-count,.ke .ke-status,.ke .ke-discover,.ke .ke-clear-range,.ke .ke-near,.ke .ke-range-text,.ke .ke-region-num,.ke .ke-rday{font-size:var(--t-meta)}
+.ke .ke-month,.ke .ke-period,.ke .ke-sgroup-name,.ke .ke-region .ke-marker-label{font-size:var(--t-title)}
+.ke .ke-srow-top b{font-size:var(--t-data)}
+/* Every boxed action: same height, radius, hairline and the site's uppercase Micro label. */
+.ke .ke-btn,.ke .ke-book,.ke .ke-region-toggle,.ke .ke-nav .ke-btn,.ke .ke-quick-apply{
+  min-height:var(--ctl);height:auto;border-radius:var(--r);font:500 var(--t-ui)/1.2 'Forma DJR Micro',Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.ke .ke-nav .ke-btn,.ke .ke-region-toggle{height:var(--ctl)}
+.ke .ke-region-option,.ke .ke-select-toggle,.ke .ke-select-opt,.ke .ke-quick-trigger,.ke .ke-quick-presets button,.ke .ke-quick-clear{font-size:var(--t-ui)}
+.ke .ke-quick-trigger,.ke .ke-close,.ke .ke-collapse,.ke .ke-destination-nav button{min-height:var(--ctl)}
+.ke .ke-quick-trigger{height:var(--ctl)}
+/* Not sailing on the chosen dates: soft red and see-through; hover or selection brings it back to full strength. */
+.ke .ke-anchor[data-unavailable] .ke-pin,.ke .ke-anchor[data-unavailable] .ke-marker-label{opacity:.55;transition:opacity .2s var(--ease-out),color .4s ease,border-color .4s ease,background-color .4s ease,box-shadow .4s ease}
+.ke .ke-anchor[data-unavailable] .ke-marker[aria-pressed=true] .ke-pin,.ke .ke-anchor[data-unavailable] .ke-marker[aria-pressed=true] .ke-marker-label,
+.ke .ke-anchor[data-unavailable] .ke-marker:focus-visible .ke-pin,.ke .ke-anchor[data-unavailable] .ke-marker:focus-visible .ke-marker-label{opacity:1}
+@media(hover:hover) and (pointer:fine){.ke .ke-anchor[data-unavailable] .ke-marker:hover .ke-pin,.ke .ke-anchor[data-unavailable] .ke-marker:hover .ke-marker-label{opacity:1}}
+
+/* Hover/selection fill: bronze grows from the pin's centre (the live pin's circle reveal), quick and smooth; the region tint fades in alongside. */
+.ke .ke-pin{--pin-base:var(--cream);transition:color .24s cubic-bezier(.23,1,.32,1),border-color .24s cubic-bezier(.23,1,.32,1),box-shadow .3s cubic-bezier(.23,1,.32,1),opacity .2s ease-out}
+.ke .ke-anchor[data-unavailable] .ke-pin{--pin-base:var(--red-bg)}
+.ke .ke-pin::before{content:'';position:absolute;inset:0;background:var(--brown-80);clip-path:circle(0% at 50% 50%);transition:clip-path .28s cubic-bezier(.23,1,.32,1)}
+.ke .ke-pin svg,.ke .ke-pin .ke-pin-num{position:relative}
+.ke .ke-marker[aria-pressed=true] .ke-pin{background-color:var(--pin-base)}
+.ke .ke-marker[aria-pressed=true] .ke-pin::before{clip-path:circle(75% at 50% 50%)}
+@media(hover:hover) and (pointer:fine){
+  .ke .ke-marker:hover .ke-pin{background-color:var(--pin-base)}
+  .ke .ke-marker:hover .ke-pin::before{clip-path:circle(75% at 50% 50%)}
+}
+.ke .ke-marker:focus-visible .ke-pin::before{clip-path:circle(75% at 50% 50%)}
+@media(prefers-reduced-motion:reduce){.ke .ke-pin::before{transition:clip-path .01s}}
+
+
+/* Quick dates trigger: calendar glyph, preset name, dates (cleaner take on Meta's period field). */
+.ke .ke-quick-trigger{gap:calc(var(--u) * .8)}
+.ke .ke-quick-ic{width:max(14px,calc(var(--u) * 1.6));height:auto;color:var(--navy-60);flex:none}
+.ke .ke-quick-value{white-space:nowrap}.ke .ke-quick-value b{font-weight:500;margin-right:calc(var(--u) * .4)}
+
+/* Quick dates field = two joined boxes, Departure | Return; either opens the two-month picker. */
+.ke .ke-quick-trigger{display:grid;grid-template-columns:1fr 1fr;align-items:stretch;gap:0;padding:0;min-width:calc(var(--u) * 40)}
+.ke .ke-quick-seg{display:flex;align-items:center;gap:calc(var(--u) * .8);padding:0 calc(var(--u) * 1.4);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ke .ke-quick-seg+.ke-quick-seg{border-left:var(--hair) solid var(--navy-20)}
+.ke .ke-quick-trigger[aria-expanded=true]{border-color:var(--navy)}
+.ke .ke-quick-trigger .ke-quick-ic{width:max(14px,calc(var(--u) * 1.6));transform:none}
+/* Inside the picker, Departure | Return use the same joined box as the field that opened it. */
+.ke .ke-quick-fields{display:grid;grid-template-columns:1fr 1fr;gap:0;width:calc(var(--u) * 40);border:var(--hair) solid var(--navy-20);border-radius:var(--r)}
+.ke .ke-quick-fields>[aria-hidden]{display:none}
+.ke .ke-quick-field{min-width:0;border:0;border-radius:0;padding:calc(var(--u) * 1.1) calc(var(--u) * 1.4)}
+.ke .ke-quick-field+[aria-hidden]+.ke-quick-field{border-left:var(--hair) solid var(--navy-20)}
+/* Boxes hug their dates: no fixed width, no stretched halves. */
+.ke .ke-quick-trigger{grid-template-columns:auto auto;min-width:0}
+.ke .ke-quick-fields{grid-template-columns:auto auto;width:max-content}
+
+/* Destination panel back to the approved September calm: sentence-case view buttons on one line, a quiet text link
+   for "Find a month with availability", and day colours readable inside a chosen period (no band burying them). */
+.ke .ke-availability-view{min-height:var(--ctl);font:500 var(--t-ui)/1.25 'Forma DJR Micro',Arial,sans-serif;text-transform:none;letter-spacing:0}
+.ke .ke-find-dates{display:inline-block;width:auto;max-width:none;min-height:0;margin:calc(var(--u) * 1.2) auto 0;padding:0 0 3px;border:0;border-radius:0;
+  background:linear-gradient(currentColor,currentColor) 0 100%/100% var(--hair) no-repeat;color:var(--navy);font:400 var(--t-meta)/1.3 'Forma DJR Micro',Arial,sans-serif;text-transform:none;letter-spacing:0}
+@media(hover:hover) and (pointer:fine){.ke .ke-find-dates:hover{background:linear-gradient(currentColor,currentColor) 0 100%/100% var(--hair) no-repeat;border:0;color:var(--navy-80)}}
+.ke .ke-rday.is-inside,.ke .ke-rday.is-preview{background:transparent}
+.ke .ke-rday.is-start.has-band,.ke .ke-rday.is-end.has-band,.ke .ke-rday.is-preview-end{background:transparent}
+/* Inside the chosen period, days keep their status colour; a hairline marks them as part of the period. */
+.ke .ke-rday.is-inside.available>span,.ke .ke-rday.is-preview.available>span{background:var(--green-bg)}
+.ke .ke-rday.is-inside.unavailable>span,.ke .ke-rday.is-preview.unavailable>span{background:var(--red-bg)}
+.ke .ke-rday.is-inside.tentative>span,.ke .ke-rday.is-preview.tentative>span{background:var(--yellow-bg)}
+.ke .ke-rday.is-inside>span,.ke .ke-rday.is-preview>span{box-shadow:inset 0 0 0 var(--hair) var(--navy-40)}
+/* Both view buttons fit on one line at every desktop width. */
+.ke .ke-availability-view{font-size:var(--t-meta);white-space:nowrap;padding-inline:calc(var(--u) * .8)}
+/* Owner (27 Oct): one text size. Everything that is not a heading is 13px; weight (400/500) and colour carry the hierarchy.
+   Headings stay larger: panel titles, section heads, month names, banner and map names. */
+.ke{--t-meta:13px;--t-ui:13px;--t-data:13px;--fs-xs:13px;--fs-s:13px;--fs-b:13px;--fs-h5:13px}
+.ke .ke-trip h4,.ke .ke-srow-top b{font-size:13px;font-weight:500}
+.ke .ke-nights{font-size:13px;white-space:nowrap}
+.ke .ke-trip p,.ke .ke-activity,.ke .ke-select-toggle,.ke .ke-select-value,.ke .ke-select-opt,.ke .ke-status,.ke .ke-empty,.ke .ke-intro p{font-size:13px}
+.ke .ke-trip{grid-template-columns:max(88px,calc(var(--u) * 12.8)) minmax(0,1fr) auto}
+/* No divider between the filter and the first charter. */
+.ke .ke-trip-list>.ke-trip:first-child{border-top:0}
+/* Nights share the date line (as in the sidebar rows), so the card is two columns and status labels stay on one line. */
+.ke .ke-trip{grid-template-columns:max(88px,calc(var(--u) * 12.8)) minmax(0,1fr)}
+.ke .ke-trip-top{display:flex;align-items:baseline;justify-content:space-between;gap:calc(var(--u) * 1)}
+.ke .ke-trip .ke-status{white-space:nowrap}
+/* Connected days: tiles fill their column and touch their same-colour neighbours; only run ends are rounded. */
+.ke .ke-range-grid{column-gap:0;row-gap:max(3px,calc(var(--u) * .4))}
+.ke .ke-rday>span{width:100%;border-radius:var(--r);box-shadow:none}
+.ke .ke-rday.run-l>span{border-top-left-radius:0;border-bottom-left-radius:0}
+.ke .ke-rday.run-r>span{border-top-right-radius:0;border-bottom-right-radius:0}
+/* Inside the chosen period: the same colours, one step deeper (no outline boxes). */
+.ke .ke-rday.is-inside.available>span{background:#b9dcc8}
+.ke .ke-rday.is-inside.unavailable>span{background:#efcac4}
+.ke .ke-rday.is-inside.tentative>span{background:#eadfb6}
+.ke .ke-rday.is-inside>span,.ke .ke-rday.is-preview>span{box-shadow:none}
