@@ -11,7 +11,7 @@
   /* Pins size like the site's `.bes-map-location-ic`, whose rem is 0.52vw (10px from 1920px up): padding 1rem, glyph min(2.4rem,2.2vh). */
   --site-rem:min(.5208333333vw,10px);--pin-pad:var(--site-rem);--pin-icon:min(calc(var(--site-rem) * 2.4),2.2vh);--pin:calc(var(--pin-icon) + var(--pin-pad) * 2 + 2px);--ke-title-gap:24px;--layer-map:1;--layer-markers:2;--layer-chrome:3;--layer-drawer:4;
   position:relative;isolation:isolate;width:100%;height:100vh;height:100dvh;min-height:0;overflow:hidden;
-  /* clip, not hidden: focus inside the off-screen drawer must never scroll the whole component sideways. */overflow:clip;
+  /* clip, not hidden: focus inside the off-screen menu must never scroll the whole component sideways. */overflow:clip;
   color:var(--navy);background:var(--cream);font-family:'Forma DJR Micro',Arial,sans-serif;font-size:var(--fs-b);line-height:1.4}
 .ke *{box-sizing:border-box}.ke [hidden]{display:none!important}
 .ke ::selection{background:var(--navy);color:var(--cream)}
@@ -23,8 +23,8 @@
 /* Headings follow the site's h1-h3: Forma DJR Deck 500, letter-spacing .01em, normal word spacing, no text shadow. */
 .ke h1,.ke h2,.ke h3{text-wrap:balance;font-family:'Forma DJR Deck',Arial,sans-serif;font-weight:500;letter-spacing:.01em;word-spacing:normal}
 .ke *{text-shadow:none}
-/* Site-like thin navy scrollbars on the sidebar, drawer and option lists. */
-.ke-schedule-scroll,.ke-drawer-scroll,.ke-select-opts,.ke-region-options{scrollbar-width:thin;scrollbar-color:var(--navy) transparent}
+/* Site-like thin navy scrollbars on the menu and option lists. */
+.ke-schedule-scroll,.ke-region-options{scrollbar-width:thin;scrollbar-color:var(--navy) transparent}
 .ke ::-webkit-scrollbar{width:max(4px,calc(var(--u) * .6));height:max(4px,calc(var(--u) * .6))}
 .ke ::-webkit-scrollbar-track{background:transparent}.ke ::-webkit-scrollbar-thumb{background:var(--navy);border-radius:var(--r)}
 /* Site small button. `.ke .ke-btn` outranks the generic `.ke button{font:inherit;color:inherit}` reset. */
@@ -56,7 +56,6 @@
   font:500 var(--fs-s)/1.2 'Forma DJR Micro',Arial,sans-serif;text-transform:uppercase;white-space:nowrap;text-align:left}
 .ke .ke-region-option[aria-current]{background:var(--navy);color:var(--white)}.ke .ke-region-option[aria-current] .ke-region-num{background:transparent;border-color:rgba(255,255,255,.3);color:var(--white)}
 .ke .ke-region-option:focus-visible{outline:2px solid var(--navy);outline-offset:-2px}
-.ke[data-view=location] .ke-nav{left:calc((100% - var(--drawer-width))/2);max-width:calc(100% - var(--drawer-width) - 32px)}
 /* Phones: numbered region pins with a matching list, as on the site's own mobile expeditions map. */
 .ke-region-list{display:none}
 /* The map always fills the viewport. The site's fixed `.header` floats above it; --ke-header (its measured height, set by the component) offsets the chrome. */
@@ -99,33 +98,23 @@
 .ke-intro{color:var(--navy)}.ke-intro h1{font-size:clamp(28px,min(4.2vw,7vh),58px);line-height:1}
 .ke-intro p{max-width:280px;margin-top:16px;font-size:14px;line-height:1.6}
 /* Prev/next destination: the site's square slider control. */
-.ke-destination-nav{position:absolute;z-index:var(--layer-chrome);left:20px;right:calc(var(--drawer-width) + 20px);top:50%;display:flex;justify-content:space-between;align-items:center;transform:translateY(-50%);pointer-events:none}
+.ke-destination-nav{position:absolute;z-index:var(--layer-chrome);left:20px;right:calc(var(--side) + 20px);top:50%;display:flex;justify-content:space-between;align-items:center;transform:translateY(-50%);pointer-events:none}
 .ke .ke-destination-nav button{pointer-events:auto;width:var(--ctl);height:var(--ctl);display:grid;place-items:center;padding:0;border:var(--hair) solid var(--navy-20);border-radius:var(--r);background:var(--cream);color:var(--navy);
   transition:background-color .2s var(--ease-out),color .2s var(--ease-out),border-color .2s var(--ease-out),transform .16s var(--ease-out)}
 .ke-destination-nav svg{width:max(12px,calc(var(--u) * 1.4));height:max(12px,calc(var(--u) * 1.4))}
-.ke-drawer{position:absolute;z-index:var(--layer-drawer);right:0;top:var(--ke-header,0px);bottom:0;width:var(--drawer-width);color:var(--navy);background:var(--panel);border-left:var(--hair) solid var(--navy-10);
-  transform:translateX(100%);visibility:hidden;pointer-events:none;transition:transform .32s var(--ease-drawer),visibility 0s .32s}
-.ke-drawer.is-open{transform:translateX(0);visibility:visible;pointer-events:auto;transition:transform .45s var(--ease-drawer),visibility 0s}
-.ke-drawer-scroll{height:100%;overflow:auto;overscroll-behavior:contain}
-/* Eyebrow removed: the title now sits beside the close button, so it keeps clear of it on the right. */
-.ke-drawer-head,.ke-schedule-head{position:sticky;z-index:3;top:0;background:var(--panel)}
-.ke-drawer-head{padding:calc(var(--u) * 2.4) calc(var(--pad) + var(--ctl) + var(--u) * 1.2) calc(var(--u) * .6) var(--pad)}
-/* Close and collapse share one square control box at the same spot. */
-.ke .ke-close,.ke .ke-collapse{position:absolute;z-index:2;top:calc(var(--u) * 1.6);right:calc(var(--u) * 1.6);flex:none;width:var(--ctl);height:var(--ctl);display:grid;place-items:center;padding:0;
+.ke-schedule-head{position:sticky;z-index:3;top:0;background:var(--panel)}
+/* The hide control: one square box in the menu's top-right corner. */
+.ke .ke-collapse{position:absolute;z-index:2;top:calc(var(--u) * 1.6);right:calc(var(--u) * 1.6);flex:none;width:var(--ctl);height:var(--ctl);display:grid;place-items:center;padding:0;
   background:var(--panel);color:var(--navy);border:var(--hair) solid var(--navy-20);border-radius:var(--r);
   transition:background-color var(--t-ui) var(--ease-out),color var(--t-ui) var(--ease-out),transform .16s var(--ease-out)}
-.ke .ke-close{font-size:max(20px,calc(var(--u) * 2.4));line-height:1}
-.ke-drawer h2{font-size:var(--fs-title);line-height:1.1}
 /* Text links: site `.hover-un` 1px underline, a navy line draws over it from the left on hover. */
-.ke .ke-discover,.ke .ke-near button,.ke .ke-route-link,.ke .ke-clear-range,.ke .ke-clear-filters{padding:0;border:0;color:var(--navy);text-decoration:none;
+.ke .ke-discover,.ke .ke-back,.ke .ke-route-link,.ke .ke-clear-range{padding:0;border:0;color:var(--navy);text-decoration:none;
   background:linear-gradient(currentColor,currentColor) 0 100%/0 var(--hair) no-repeat,linear-gradient(var(--navy-40),var(--navy-40)) 0 100%/100% var(--hair) no-repeat;
   transition:background-size .2s var(--ease-out)}
-.ke-discover{display:inline-block;margin:calc(var(--u) * .4) var(--pad) calc(var(--u) * 1.2);font-size:var(--fs-s);line-height:1.4}
 .ke-availability-controls{padding:calc(var(--u) * .4) var(--pad) calc(var(--u) * 1.6);border-bottom:var(--hair) solid var(--line)}
 .ke-availability-views{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:calc(var(--u) * .8)}
 .ke .ke-availability-view{display:flex;align-items:center;justify-content:center;min-height:max(44px,calc(var(--u) * 5.2));padding:calc(var(--u) * 1) calc(var(--u) * 1.2);border:var(--hair) solid var(--navy-40);border-radius:var(--r);background:transparent;color:var(--navy);font:500 var(--fs-s)/1.3 'Forma DJR Micro',Arial,sans-serif;text-align:center;text-wrap:balance}
 .ke .ke-availability-view[aria-pressed=true]{background:var(--navy);color:var(--white);border-color:var(--navy)}
-.ke-calendar{padding:calc(var(--u) * 1.2) var(--pad) calc(var(--u) * 1.6);border-bottom:var(--hair) solid var(--line)}
 .ke-calendar-top{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--u) * .8);max-width:calc(var(--u) * 36);margin:0 auto calc(var(--u) * .4)}
 .ke .ke-calendar-arrow{width:max(32px,calc(var(--u) * 4));height:max(32px,calc(var(--u) * 4));flex:none;padding:0;background:transparent;border:0;border-radius:var(--r);font-size:max(18px,calc(var(--u) * 2.2));line-height:1;color:var(--navy)}
 .ke-calendar-arrow:disabled{opacity:.3}
@@ -135,9 +124,7 @@
 .ke-period[aria-expanded=true]{background:var(--brown-20)}
 .ke-chevron{width:max(10px,calc(var(--u) * 1.1));height:max(7px,calc(var(--u) * .8));flex:none}.ke-period[aria-expanded=true] .ke-chevron{transform:rotate(180deg)}
 .ke-calendar-body{position:relative;max-width:calc(var(--u) * 36);margin:auto}
-.ke-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
-.ke-destination-dates{padding:0 var(--pad)}
-/* The picker covers the day grid's own footprint, so opening it never moves the drawer content. */
+/* The picker covers the day grid's own footprint, so opening it never moves the menu content. */
 .ke-picker{position:absolute;inset:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:calc(var(--u) * .8);background:var(--panel);
   opacity:0;visibility:hidden;transform:translateY(-4px);transition:opacity .18s var(--ease-out),transform .18s var(--ease-out),visibility 0s .18s}
 .ke-picker.is-open{opacity:1;visibility:visible;transform:none;transition:opacity .2s var(--ease-out),transform .2s var(--ease-out),visibility 0s}
@@ -155,41 +142,15 @@
 .ke-picker-month.is-selected.has-availability::after{background:var(--green-bg)}
 .ke-picker-month:disabled{color:var(--navy-20);border-color:transparent}
 .ke-weekday{font-size:max(11px,calc(var(--u) * 1.2));text-align:center;line-height:calc(var(--u) * 2.4);color:var(--navy-60)}
-.ke-day{height:calc(var(--u) * 3.4);min-height:24px;display:grid;place-items:center;font-size:var(--fs-xs);border-radius:var(--r);font-variant-numeric:tabular-nums}
-.ke-day.available{background:var(--green-bg);color:var(--green)}.ke-day.unavailable{background:var(--red-bg);color:var(--red)}
-.ke-day.tentative{background:var(--yellow-bg);color:var(--yellow)}.ke-day.outside{color:var(--outside);background:transparent}.ke-day.past{color:var(--navy-20);background:transparent}
-.ke-day.is-today{outline:var(--hair) solid currentColor;outline-offset:-3px}
 .ke-legend{display:flex;gap:calc(var(--u) * 1.4);justify-content:center;flex-wrap:wrap;margin-top:calc(var(--u) * 1.2);font-size:max(11px,calc(var(--u) * 1.2));color:var(--navy-80)}
 .ke-legend span{display:flex;align-items:center;gap:5px}.ke-legend i{width:7px;height:7px;border-radius:50%;display:inline-block}
 .ke-legend .available{background:var(--green)}.ke-legend .unavailable{background:var(--red)}.ke-legend .tentative{background:var(--yellow)}
 .ke .ke-find-dates{display:flex;align-items:center;justify-content:center;gap:calc(var(--u) * 1.2);width:100%;max-width:calc(var(--u) * 36);min-height:var(--ctl);margin:calc(var(--u) * 1.6) auto 0;padding:calc(var(--u) * 1) calc(var(--u) * 1.2);border:var(--hair) solid var(--navy-40);border-radius:var(--r);background:transparent;color:var(--navy);font-size:var(--fs-s);text-decoration:none}
-.ke-trips{padding:calc(var(--u) * 2.4) var(--pad) calc(var(--u) * 4)}.ke-trips-head{margin-bottom:calc(var(--u) * .8)}.ke-trips-head h3{font-size:max(19px,calc(var(--u) * 2.4));line-height:1.2}
-/* Filter fields copy the live schedule page: underlined value, grey chevron that swaps on hover and rotates when open,
-   a navy line that draws in, and a white option panel that fades and drops. */
-.ke-filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:calc(var(--u) * 1.6);margin-top:calc(var(--u) * 1.2)}
-.ke-filters[data-mode=month]{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.ke-filters[data-mode=month] [data-filter=month],.ke-filters[data-mode=month] [data-filter=year]{display:none}
-.ke-select{position:relative;min-width:0}
-.ke .ke-select-toggle{position:relative;display:flex;align-items:center;width:100%;min-height:max(40px,calc(var(--u) * 4.4));padding:calc(var(--u) * 1) calc(var(--u) * 2.8) calc(var(--u) * 1) calc(var(--u) * .4);border:0;border-radius:0;background:transparent;color:var(--navy);font:400 var(--fs-s)/1.2 'Forma DJR Micro',Arial,sans-serif;text-align:left}
-.ke-select-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ke-select-ic{position:absolute;right:0;top:50%;display:grid;width:max(18px,calc(var(--u) * 2.2));height:max(18px,calc(var(--u) * 2.2));transform:translateY(-50%);overflow:hidden;pointer-events:none}
-.ke-select-ic svg{grid-area:1/1;width:100%;height:100%}.ke-select-ic svg:first-child{transform:translateY(-100%)}
-.ke-select.is-open .ke-select-ic{transform:translateY(-50%) rotate(180deg)}
-.ke-select-line{position:absolute;left:0;right:0;bottom:0;height:var(--hair);overflow:hidden;background:var(--navy-10);pointer-events:none}
-.ke-select-line span{display:block;height:100%;background:var(--navy);transform:scaleX(0);transform-origin:right}
-.ke-select.is-open .ke-select-line span,.ke-select.is-filled .ke-select-line span{transform:scaleX(1);transform-origin:left}
-.ke-select-opts{position:absolute;z-index:3;top:100%;left:0;display:grid;width:100%;min-width:max(150px,calc(var(--u) * 17));max-height:max(200px,calc(var(--u) * 24));overflow:auto;overscroll-behavior:contain;padding:calc(var(--u) * .8);background:var(--white);border:var(--hair) solid var(--navy-10);border-radius:var(--r);
-  opacity:0;visibility:hidden;pointer-events:none;transform:translateY(-4px);transition:transform .16s var(--ease-out),opacity .16s var(--ease-out),visibility 0s .16s}
-.ke-select.is-open .ke-select-opts{opacity:1;visibility:visible;pointer-events:auto;transform:none;transition:transform .2s var(--ease-out),opacity .2s var(--ease-out),visibility 0s}
-.ke-filters [data-filter=year] .ke-select-opts{left:auto;right:0}
-.ke .ke-select-opt{display:block;width:100%;padding:calc(var(--u) * 1) calc(var(--u) * 1.2);border:0;border-radius:var(--r);background:transparent;color:var(--navy);font:400 var(--fs-s)/1.2 'Forma DJR Micro',Arial,sans-serif;text-align:left;white-space:nowrap}
-.ke .ke-select-opt[aria-selected=true]{background:var(--navy);color:var(--white)}
-.ke .ke-select-opt:focus-visible{outline:2px solid var(--navy);outline-offset:-2px}
-.ke .ke-clear-filters{margin-top:calc(var(--u) * 1.4);font-size:var(--fs-s)}
-/* Drawer trips: the site schedule row (hairline above, no box), 3:2 cover, date as h5, nights right-aligned. */
+/* Trip cards: the site schedule row (hairline above, no box), 3:2 cover, date as h5, nights right-aligned. */
 .ke-trip{display:grid;grid-template-columns:max(88px,calc(var(--u) * 12.8)) minmax(0,1fr) max(36px,calc(var(--u) * 4.4));column-gap:calc(var(--u) * 1.4);align-items:start;padding:calc(var(--u) * 2.4) 0;border-top:var(--hair) solid var(--line)}
 .ke-trip-main{min-width:0}.ke-trip-heading{display:grid;gap:calc(var(--u) * .8);margin-bottom:calc(var(--u) * 1)}.ke-trip-tags{display:flex;flex-wrap:wrap;gap:6px}
 .ke-trip h4{font:500 var(--fs-h5)/1.3 'Forma DJR Micro',Arial,sans-serif;letter-spacing:0;margin:0;font-variant-numeric:tabular-nums}
-.ke-trip img,.ke-sgroup-head img{background:var(--brown-20);color:transparent}
+.ke-trip img{background:var(--brown-20);color:transparent}
 .ke-trip img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;border-radius:var(--r);margin:0}
 .ke-status{display:inline-block;font-size:var(--fs-xs);font-weight:500;line-height:1.2;padding:calc(var(--u) * .6) calc(var(--u) * 1.2);border-radius:var(--r);background:var(--red-bg);color:var(--red)}
 .ke-status.available{background:var(--green-bg);color:var(--green)}.ke-status.tentative{background:var(--yellow-bg);color:var(--yellow)}
@@ -222,7 +183,7 @@
   color:var(--cream);background:var(--navy);border:var(--hair) solid var(--navy);border-radius:var(--r);text-decoration:none;font-size:var(--fs-xs);font-weight:500}
 .ke-empty{margin-top:calc(var(--u) * .8)!important;font-size:var(--fs-s);line-height:1.5;color:var(--navy-80)}
 .ke-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-/* Schedule sidebar: always in the right-hand column; the destination drawer slides over it. */
+/* The schedule menu: always in the right-hand column (overview, region and destination alike). */
 .ke-schedule{position:absolute;z-index:var(--layer-drawer);right:0;top:var(--ke-header,0px);bottom:0;display:flex;flex-direction:column;width:var(--drawer-width);color:var(--navy);background:var(--panel);border-left:var(--hair) solid var(--navy-10);
   transition:transform .45s var(--ease-drawer),visibility 0s}
 /* Collapsed: the sidebar slides fully off and a site-style tab brings it back. Site curve; exit slightly faster than enter. */
@@ -234,16 +195,26 @@
 .ke .ke-expand svg{width:max(14px,calc(var(--u) * 1.6));height:auto;transition:transform .2s var(--ease-out)}
 .ke .ke-expand:active{transform:scale(.97)}
 @media(hover:hover) and (pointer:fine){.ke .ke-expand:hover span{background-size:100% var(--hair)}.ke .ke-expand:hover svg{transform:translateX(3px)}}
-.ke[data-view=location] .ke-expand{display:none}
 .ke-schedule-bar{display:none}
 .ke-schedule-scroll{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
 .ke-schedule-head{padding:calc(var(--u) * 2.4) calc(var(--pad) + var(--ctl) + var(--u) * 1.2) calc(var(--u) * .2) var(--pad)}.ke-schedule h2{font-size:var(--fs-title);line-height:1.1}
 .ke-collapse svg{width:max(11px,calc(var(--u) * 1.2));height:max(11px,calc(var(--u) * 1.2))}
-/* The chosen dates read as one quiet line under the title, replacing labelled fields. */
-.ke-range-line{display:flex;align-items:center;gap:calc(var(--u) * .6);min-height:calc(var(--u) * 3.2);margin-top:2px!important;font-size:var(--fs-s);color:var(--navy-80);font-variant-numeric:tabular-nums}
-.ke-range-line.is-set{color:var(--navy);font-weight:500}
-.ke .ke-range-line .ke-clear-range{margin-left:calc(var(--u) * .6);font-weight:400}
-.ke-range{padding:calc(var(--u) * .4) var(--pad) calc(var(--u) * 1.4);border-bottom:var(--hair) solid var(--line)}
+/* One quiet line under the title: the count (with the quick dates and Clear dates), or the way back plus About. */
+.ke-menu-line{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:calc(var(--u) * .6) calc(var(--u) * 1.6);min-height:calc(var(--u) * 3.2);
+  margin:calc(var(--u) * 1.2) calc((var(--ctl) + var(--u) * 1.2) * -1) 0 0!important;font-size:var(--t-meta);line-height:1.4;color:var(--navy-80);font-variant-numeric:tabular-nums}
+.ke-menu-line.is-count{justify-content:flex-start}
+.ke-menu-line:not(.is-count)>span{color:var(--navy);font-weight:500}
+.ke .ke-back{display:inline-flex;align-items:center;gap:6px;font:inherit;white-space:nowrap}.ke .ke-back svg{width:9px;height:9px;flex:none}
+.ke .ke-discover{font:inherit;line-height:1.4}
+.ke-dates-line{display:flex;flex-wrap:wrap;align-items:baseline;gap:calc(var(--u) * .6) calc(var(--u) * 1.6);margin-top:calc(var(--u) * 1.6)!important;color:var(--navy);font-weight:500}
+.ke-menu-actions{display:flex;flex-wrap:wrap;align-items:center;gap:calc(var(--u) * 1.2);margin-top:calc(var(--u) * 1.6)}.ke .ke-menu-actions .ke-book{margin-top:0}
+.ke-schedule-results h3.ke-month-h{margin-top:calc(var(--u) * 2.8);padding-bottom:calc(var(--u) * 1.2);border-bottom:var(--hair) solid var(--line)}
+.ke-schedule-list>h3:first-child{margin-top:0}
+.ke .ke-month-h+.ke-trip{border-top:0}
+.ke-trip-main .ke-trip-region{margin-top:calc(var(--u) * .4)}
+/* The charter on a tapped day: a linen tray around the same card. */
+.ke .ke-trip{transition:background-color .3s var(--ease-out)}
+.ke .ke-trip.is-match{margin-inline:calc(var(--u) * -1.2);padding-inline:calc(var(--u) * 1.2);border-radius:var(--r);background:var(--cream)}.ke-range{padding:calc(var(--u) * .4) var(--pad) calc(var(--u) * 1.4);border-bottom:var(--hair) solid var(--line)}
 .ke-range-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));row-gap:3px;max-width:calc(var(--u) * 36);margin:auto}
 /* Range picker: the band between departure and return runs edge to edge; days sit as tiles on top of it. */
 .ke .ke-rday-pad{display:block;height:max(26px,calc(var(--u) * 3.6))}
@@ -257,40 +228,18 @@
 .ke .ke-rday.is-start.has-band{background:linear-gradient(90deg,transparent 50%,var(--brown-20) 50%)}
 .ke .ke-rday.is-end.has-band,.ke .ke-rday.is-preview-end{background:linear-gradient(90deg,var(--brown-20) 50%,transparent 50%)}
 .ke-rday.is-start>span,.ke-rday.is-end>span,.ke-rday.is-preview-end>span{background:var(--navy);color:var(--white)}
-.ke-rday:active:not(:disabled)>span{transform:scale(.94)}
+button.ke-rday:active:not(:disabled)>span{transform:scale(.94)}
+.ke span.ke-rday{cursor:default}
+.ke .ke-rday.is-picked>span{background:var(--navy);color:var(--white)}
 .ke-rday.is-today>span{font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .ke .ke-clear-range{font-size:var(--fs-xs)}
-.ke-schedule-results{padding:calc(var(--u) * 1.6) var(--pad) calc(var(--u) * 4)}.ke-schedule-results h3{font-size:max(19px,calc(var(--u) * 2.4));line-height:1.2}
-.ke-sgroup{margin-top:calc(var(--u) * 2.4);border-radius:var(--r-lg,calc(var(--u) * .8));background:var(--cream);overflow:hidden}
-.ke-sgroup.is-empty{background:transparent}
-.ke .ke-sgroup:not(.is-empty) .ke-sgroup-head{border-radius:0}
-.ke .ke-sgroup .ke-srow{padding-inline:calc(var(--u) * 1.6)}
-/* Region headers are thin photo banners (the region's bespoke-expeditions hero), name and count in white on a navy fade. */
-.ke .ke-sgroup-head{position:relative;isolation:isolate;display:flex;align-items:flex-end;justify-content:space-between;gap:calc(var(--u) * 1.2);width:100%;height:max(64px,calc(var(--u) * 8));padding:calc(var(--u) * 1.2) calc(var(--u) * 1.4);overflow:hidden;border:0;border-radius:var(--r-lg);background:var(--navy);color:var(--white);text-align:left;transition:transform .16s var(--ease-out)}
-.ke-sgroup-head img{position:absolute;z-index:-2;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 55%;transition:transform .9s var(--ease-out)}
-.ke-sgroup-head::before{content:'';position:absolute;z-index:-1;inset:0;background:linear-gradient(0deg,rgba(0,51,87,.88) 0%,rgba(0,51,87,.45) 55%,rgba(0,51,87,.05) 100%)}
-.ke .ke-sgroup-head:active{transform:scale(.98)}
-.ke-sgroup-name{font:500 max(16px,calc(var(--u) * 2))/1.15 'Forma DJR Deck',Arial,sans-serif;letter-spacing:.01em}
-.ke-sgroup-count{flex:none;max-width:42%;font-size:var(--fs-xs);font-weight:400;line-height:1.3;text-align:right;font-variant-numeric:tabular-nums;color:var(--white)}
-.ke-sgroup.is-empty .ke-sgroup-head img{filter:saturate(.35)}
-/* Sidebar trips: site schedule rows, hairline above, no box. */
-.ke .ke-srow{display:grid;gap:calc(var(--u) * .4);width:100%;padding:calc(var(--u) * 1.6) 0;border:0;border-top:var(--hair) solid var(--line);border-radius:0;background:transparent;color:var(--navy);text-align:left;transition:transform .16s var(--ease-out)}
-.ke-sgroup-head+.ke-srow{border-top:0}
-.ke-sgroup .ke-srow+.ke-srow{border-top-color:var(--navy-10)}
-.ke-srow-top{display:flex;align-items:baseline;justify-content:space-between;gap:calc(var(--u) * 1.2)}.ke-srow-top b{font-weight:500;font-size:max(14px,calc(var(--u) * 1.8));font-variant-numeric:tabular-nums}
-.ke-srow-nights{flex:none;font-size:var(--fs-xs);color:var(--navy-80);font-variant-numeric:tabular-nums}.ke-srow-route{font-size:var(--fs-xs);color:var(--navy-80)}.ke-srow .ke-status{justify-self:start;margin-top:calc(var(--u) * .4)}
-/* Nearest dates: one line of underlined text links separated by a middle dot. */
-.ke-near{margin-top:calc(var(--u) * .4);font-size:var(--fs-xs);line-height:1.6;color:var(--navy-80);font-variant-numeric:tabular-nums}
-.ke-near>span:first-child{margin-right:calc(var(--u) * .6)}
-.ke-near-sep{margin:0 calc(var(--u) * .6)}
-.ke .ke-near button{display:inline;font:inherit;line-height:inherit}
+.ke-schedule-results{padding:calc(var(--u) * 2.4) var(--pad) calc(var(--u) * 4)}.ke-schedule-results h3{margin-top:calc(var(--u) * 2.4);font-size:max(17px,calc(var(--u) * 2.2));line-height:1.2}
 /* With dates chosen, regions without a sailing fade to navy at half strength (no off-palette greys). */
 .ke-anchor[data-unavailable] .ke-pin{background:var(--red-bg);border-color:var(--red-line);color:var(--red)}
 .ke .ke-anchor[data-unavailable] .ke-marker-label.ke-btn{background:var(--red-bg);border-color:var(--red-line);color:var(--red)}
 .ke-anchor[data-unavailable] .ke-region .ke-marker-label,.ke .ke-region-list [data-unavailable]{color:var(--red)}
 @media(min-width:768px){
   .ke-nav{left:calc((100% - var(--side))/2);max-width:calc(100% - var(--side) - 32px)}
-  .ke[data-view=location] .ke-nav{left:calc((100% - var(--drawer-width))/2);max-width:calc(100% - var(--drawer-width) - 32px)}
 }
 .ke-calibration{position:absolute;z-index:var(--layer-drawer);left:16px;right:16px;top:calc(var(--ke-header,0px) + 16px);background:var(--cream);color:var(--navy);padding:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
 .ke-calibration button{min-height:44px;padding:8px 16px;border:1px solid var(--navy);background:transparent;border-radius:var(--r)}
@@ -298,10 +247,10 @@
 .ke[data-calibrate=true] .ke-markers,.ke[data-calibrate=true] .ke-marker{pointer-events:none}
 /* Short desktop panes (laptops at high OS scaling): tighten the sidebar so the whole month and its legend sit above the fold. */
 @media(min-width:768px) and (max-height:820px){
-  .ke-schedule-head,.ke-drawer-head{padding-top:calc(var(--u) * 1.6)}.ke .ke-collapse,.ke .ke-close{top:calc(var(--u) * 1)}
-  .ke-range-line{min-height:calc(var(--u) * 2.8)}.ke-range{padding-bottom:calc(var(--u) * 1)}.ke .ke-calendar-arrow,.ke .ke-period{height:max(30px,calc(var(--u) * 3.4));min-height:0}
+  .ke-schedule-head{padding-top:calc(var(--u) * 1.6)}.ke .ke-collapse{top:calc(var(--u) * 1)}
+  .ke-range{padding-bottom:calc(var(--u) * 1)}.ke .ke-calendar-arrow,.ke .ke-period{height:max(30px,calc(var(--u) * 3.4));min-height:0}
   .ke-weekday{line-height:calc(var(--u) * 2)}.ke .ke-rday,.ke .ke-rday-pad{height:max(25px,calc(var(--u) * 3.2))}.ke-rday>span{width:max(23px,calc(var(--u) * 3));height:max(23px,calc(var(--u) * 3))}.ke-legend{margin-top:calc(var(--u) * .6)}
-  .ke-day{height:max(24px,calc(var(--u) * 3))}.ke .ke-availability-view{min-height:40px;padding:calc(var(--u) * .8) calc(var(--u) * 1)}.ke-intro p{margin-top:10px}
+  .ke .ke-availability-view{min-height:40px;padding:calc(var(--u) * .8) calc(var(--u) * 1)}.ke-intro p{margin-top:10px}
 }
 @media(max-width:991px){.ke{--gutter:40px;--site-rem:1.1990407674vw;--pin-pad:calc(var(--site-rem) * .8);--pin-icon:calc(var(--site-rem) * 1.8)}.ke-intro{max-width:320px}}
 @media(max-width:767px){
@@ -316,12 +265,10 @@
   .ke .ke-nav .ke-btn{font-size:max(12px,calc(var(--u) * 1.3));min-height:44px}.ke .ke-region-option{font-size:max(12px,calc(var(--u) * 1.3));min-height:40px}
   .ke{--site-rem:2.3255813953vw;--pin-pad:4px;--pin-icon:max(12px,calc(var(--u) * 2.2) - 10px)}.ke .ke-pin-num{font-size:11px}
   .ke-intro{top:calc(var(--ke-header,0px) + 20px);max-width:260px}.ke-intro h1{font-size:34px}.ke-intro p{font-size:13px;max-width:245px;margin-top:12px}
-  .ke-drawer{top:auto;height:65%;width:100%;transform:translateY(100%);border-radius:var(--r-lg) var(--r-lg) 0 0}.ke-drawer.is-open{transform:translateY(0)}
-  .ke .ke-rday,.ke .ke-rday-pad{height:40px}.ke-day{height:max(30px,calc(var(--u) * 3.4))}
+  .ke .ke-rday,.ke .ke-rday-pad{height:40px}
   .ke .ke-availability-view{min-height:max(52px,calc(var(--u) * 6.4))}
   .ke-trip{grid-template-columns:max(92px,calc(var(--u) * 11.4)) minmax(0,1fr) max(34px,calc(var(--u) * 3.8));column-gap:calc(var(--u) * 1.2)}
-  .ke .ke-near button{padding-block:calc(var(--u) * 1)}
-    /* The map strip above the drawer is too short for every neighbouring label plus the controls and arrows,
+    /* The map strip above the sheet is too short for every neighbouring label plus the controls and arrows,
      so only the open destination is named; the others stay as tappable pins. */
   .ke[data-view=location] .ke-marker:not(.ke-region)[aria-pressed=false] .ke-marker-label{display:none}
   .ke[data-view=location] .ke-nav{z-index:5;display:grid;left:16px;right:16px;top:calc(var(--ke-header,0px) + 6px);bottom:auto;width:auto;max-width:none;transform:none;gap:8px}
@@ -332,25 +279,26 @@
   .ke[data-view=location] .ke-region-toggle[aria-expanded=true] .ke-chevron{transform:rotate(180deg)}
   .ke-destination-nav{left:8px;right:8px;top:calc((35% + var(--ke-header,0px) + 60px)/2)}
 }
-/* Phones: the schedule is a bottom sheet whose bar (dates + count) stays visible; map controls sit above it. */
+/* Phones: the menu is one bottom sheet whose bar (place + count) stays visible; map controls sit above it. */
 @media(max-width:767px){
   .ke{--sheet-bar:56px}
-  .ke-schedule{top:auto;height:min(82%,680px);width:100%;border-radius:var(--r-lg) var(--r-lg) 0 0;box-shadow:0 -8px 24px rgba(0,51,87,.14);transform:translateY(calc(100% - var(--sheet-bar)));transition:transform .45s var(--ease-drawer)}
+  .ke-schedule{top:auto;height:65%;width:100%;border-radius:var(--r-lg) var(--r-lg) 0 0;box-shadow:0 -8px 24px rgba(0,51,87,.14);transform:translateY(calc(100% - var(--sheet-bar)));transition:transform .45s var(--ease-drawer)}
   .ke[data-schedule=open] .ke-schedule{transform:none}
-  .ke[data-view=location] .ke-schedule{transform:translateY(100%)}
   .ke .ke-schedule-bar{display:flex;flex:none;align-items:center;gap:12px;width:100%;height:var(--sheet-bar);padding:0 20px;border:0;border-bottom:var(--hair) solid var(--line);background:transparent;color:var(--navy);font:500 14px/1.2 'Forma DJR Micro',Arial,sans-serif;text-align:left}
-  .ke-schedule-bar-dates{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .ke-schedule-bar-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums}
   .ke-schedule-bar-count{flex:none;max-width:55%;font-weight:400;font-size:12px;line-height:1.2;text-align:right;color:var(--navy-80)}
   .ke-schedule-bar .ke-chevron{transform:rotate(180deg)}.ke-schedule-bar[aria-expanded=true] .ke-chevron{transform:none}
-  .ke-schedule-head{padding:12px var(--pad) 0}.ke-schedule h2,.ke .ke-collapse,.ke .ke-expand{display:none}.ke-range-line{justify-content:flex-end;min-height:0;margin-top:0!important}.ke-range-text{display:none}
+  .ke-schedule-head{padding:12px var(--pad) 0}.ke-schedule h2,.ke .ke-collapse,.ke .ke-expand{display:none}
+  /* The bar already names the place and the count. */
+  .ke-menu-line{margin:0!important}.ke-menu-line.is-count{display:none}
   .ke-range{padding:6px var(--pad) 12px}
   .ke[data-view=world] .ke-region-list{bottom:calc(var(--sheet-bar) + 12px)}
   .ke[data-view=region] .ke-nav{bottom:calc(var(--sheet-bar) + 20px)}
 }
 /* High-frequency controls: short ease-out colour changes and a press scale. */
-.ke .ke-calendar-arrow,.ke .ke-period,.ke .ke-picker-month,.ke .ke-region-option,.ke .ke-select-opt,.ke .ke-book,.ke .ke-availability-view,.ke .ke-find-dates,.ke .ke-near button{transition:background-color var(--t-ui) var(--ease-out),color var(--t-ui) var(--ease-out),border-color var(--t-ui) var(--ease-out),background-size .2s var(--ease-out),transform .16s var(--ease-out)}
-.ke .ke-btn:active,.ke .ke-calendar-arrow:active:not(:disabled),.ke .ke-period:active,.ke .ke-picker-month:active:not(:disabled),.ke .ke-close:active,.ke .ke-collapse:active,.ke .ke-book:active,.ke .ke-availability-view:active,.ke .ke-find-dates:active,.ke .ke-destination-nav button:active,.ke .ke-srow:active,.ke .ke-select-opt:active,.ke .ke-region-option:active{transform:scale(.97)}
-.ke .ke-chevron,.ke .ke-select-ic,.ke .ke-select-ic svg,.ke .ke-select-line span{transition:transform .2s var(--ease-out)}
+.ke .ke-calendar-arrow,.ke .ke-period,.ke .ke-picker-month,.ke .ke-region-option,.ke .ke-book,.ke .ke-availability-view,.ke .ke-find-dates{transition:background-color var(--t-ui) var(--ease-out),color var(--t-ui) var(--ease-out),border-color var(--t-ui) var(--ease-out),background-size .2s var(--ease-out),transform .16s var(--ease-out)}
+.ke .ke-btn:active,.ke .ke-calendar-arrow:active:not(:disabled),.ke .ke-period:active,.ke .ke-picker-month:active:not(:disabled),.ke .ke-collapse:active,.ke .ke-book:active,.ke .ke-availability-view:active,.ke .ke-find-dates:active,.ke .ke-destination-nav button:active,.ke .ke-region-option:active{transform:scale(.97)}
+.ke .ke-chevron{transition:transform .2s var(--ease-out)}
 /* Hover only where a fine pointer can hover. */
 @media(hover:hover) and (pointer:fine){
   .ke .ke-btn:hover{background:var(--navy);color:var(--white)}
@@ -359,25 +307,20 @@
   .ke-anchor .ke-marker:hover .ke-marker-label{color:var(--navy)}
   .ke .ke-marker:hover .ke-marker-label.ke-btn{background:var(--navy);color:var(--white)}
   .ke-marker:hover .ke-marker-label .ke-flip-txt{transform:translateY(calc(-100% - var(--flip-gap)))}
-  .ke .ke-region-option:not([aria-current]):hover,.ke .ke-select-opt:not([aria-selected=true]):hover{background:var(--hover-white)}
-  .ke .ke-destination-nav button:hover,.ke .ke-close:hover,.ke .ke-collapse:hover{background:var(--navy);border-color:var(--navy);color:var(--white)}
-  .ke .ke-discover:hover,.ke .ke-near button:hover,.ke .ke-route-link:hover,.ke .ke-clear-range:hover,.ke .ke-clear-filters:hover{background-size:100% var(--hair),100% var(--hair)}
+  .ke .ke-region-option:not([aria-current]):hover{background:var(--hover-white)}
+  .ke .ke-destination-nav button:hover,.ke .ke-collapse:hover{background:var(--navy);border-color:var(--navy);color:var(--white)}
+  .ke .ke-discover:hover,.ke .ke-back:hover,.ke .ke-route-link:hover,.ke .ke-clear-range:hover{background-size:100% var(--hair),100% var(--hair)}
   .ke .ke-availability-view:not([aria-pressed=true]):hover,.ke .ke-find-dates:hover{background:var(--brown-20);border-color:var(--navy)}
   .ke .ke-calendar-arrow:hover:not(:disabled),.ke-period:hover{background:var(--brown-20)}
   .ke-picker-month:not(.is-selected):hover:not(:disabled){background:var(--brown-20);border-color:var(--brown-20)}
-  .ke-select:hover .ke-select-line span{transform:scaleX(1);transform-origin:left}
-  .ke-select:hover .ke-select-ic svg:first-child{transform:none}.ke-select:hover .ke-select-ic svg:last-child{transform:translateY(100%)}
   .ke .ke-book:hover{background:var(--cream);color:var(--navy)}
-  .ke-rday:not(:disabled):not(.is-start):not(.is-end):hover>span{outline:var(--hair) solid var(--navy);outline-offset:calc(var(--hair) * -1)}
-  .ke-sgroup-head:hover img{transform:scale(1.04)}
-  .ke .ke-srow:hover b{text-decoration:underline;text-decoration-thickness:var(--hair);text-underline-offset:3px}
+  button.ke-rday:not(:disabled):not(.is-start):not(.is-end):not(.is-picked):hover>span{outline:var(--hair) solid var(--navy);outline-offset:calc(var(--hair) * -1)}
 }
 .ke[data-input=key] *{transition:none!important}
 @media(prefers-reduced-motion:reduce){.ke *{animation:none!important;transition:none!important}}
 
 /* Quick dates under the collapsed tab: a field that opens presets + two months (draft, Apply). Desktop only. */
 .ke-quick{position:absolute;z-index:var(--layer-chrome);right:calc(var(--u) * 2.4);top:calc(var(--ke-header,0px) + var(--u) * 2.4 + var(--ctl) + var(--u) * .4);display:flex;flex-direction:column;align-items:flex-end}
-.ke[data-view=location] .ke-quick{display:none}
 .ke .ke-quick-trigger{display:inline-flex;align-items:center;gap:calc(var(--u) * 1);min-height:max(36px,calc(var(--u) * 4.4));padding:0 calc(var(--u) * 1.4);border:var(--hair) solid var(--navy-20);border-radius:var(--r);background:var(--panel);color:var(--navy);
   font:400 max(13px,calc(var(--u) * 1.6))/1 'Forma DJR Micro',Arial,sans-serif;font-variant-numeric:tabular-nums;transition:border-color var(--t-ui) var(--ease-out),transform .16s var(--ease-out)}
 .ke .ke-quick-trigger svg{width:max(10px,calc(var(--u) * 1.2));transition:transform .2s var(--ease-out)}
@@ -418,15 +361,14 @@
    Type: meta 12 (weekdays, legend, routes, nights, counts, status, links) · ui 13.3 (buttons, selects, options) ·
    data 15 (trip dates) · title 16.7 (month names, banner names, map names) · h3 20 · h2 26.7 (at 1600px). */
 .ke{--t-meta:max(12px,calc(var(--u) * 1.4));--t-ui:max(13px,calc(var(--u) * 1.6));--t-data:max(14px,calc(var(--u) * 1.8));--t-title:max(16px,calc(var(--u) * 2))}
-.ke .ke-weekday,.ke .ke-legend,.ke .ke-srow-route,.ke .ke-srow-nights,.ke .ke-sgroup-count,.ke .ke-status,.ke .ke-discover,.ke .ke-clear-range,.ke .ke-near,.ke .ke-range-text,.ke .ke-region-num,.ke .ke-rday{font-size:var(--t-meta)}
-.ke .ke-month,.ke .ke-period,.ke .ke-sgroup-name,.ke .ke-region .ke-marker-label{font-size:var(--t-title)}
-.ke .ke-srow-top b{font-size:var(--t-data)}
+.ke .ke-weekday,.ke .ke-legend,.ke .ke-status,.ke .ke-discover,.ke .ke-back,.ke .ke-clear-range,.ke .ke-region-num,.ke .ke-rday{font-size:var(--t-meta)}
+.ke .ke-month,.ke .ke-period,.ke .ke-region .ke-marker-label{font-size:var(--t-title)}
 /* Every boxed action: same height, radius, hairline and the site's uppercase Micro label. */
 .ke .ke-btn,.ke .ke-book,.ke .ke-region-toggle,.ke .ke-nav .ke-btn,.ke .ke-quick-apply{
   min-height:var(--ctl);height:auto;border-radius:var(--r);font:500 var(--t-ui)/1.2 'Forma DJR Micro',Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
 .ke .ke-nav .ke-btn,.ke .ke-region-toggle{height:var(--ctl)}
-.ke .ke-region-option,.ke .ke-select-toggle,.ke .ke-select-opt,.ke .ke-quick-trigger,.ke .ke-quick-presets button,.ke .ke-quick-clear{font-size:var(--t-ui)}
-.ke .ke-quick-trigger,.ke .ke-close,.ke .ke-collapse,.ke .ke-destination-nav button{min-height:var(--ctl)}
+.ke .ke-region-option,.ke .ke-quick-trigger,.ke .ke-quick-presets button,.ke .ke-quick-clear{font-size:var(--t-ui)}
+.ke .ke-quick-trigger,.ke .ke-collapse,.ke .ke-destination-nav button{min-height:var(--ctl)}
 .ke .ke-quick-trigger{height:var(--ctl)}
 /* Not sailing on the chosen dates: soft red and see-through; hover or selection brings it back to full strength. */
 .ke .ke-anchor[data-unavailable] .ke-pin,.ke .ke-anchor[data-unavailable] .ke-marker-label{opacity:.55;transition:opacity .2s var(--ease-out),color .4s ease,border-color .4s ease,background-color .4s ease,box-shadow .4s ease}
@@ -469,8 +411,8 @@
 .ke .ke-quick-trigger{grid-template-columns:auto auto;min-width:0}
 .ke .ke-quick-fields{grid-template-columns:auto auto;width:max-content}
 
-/* Destination panel back to the approved September calm: sentence-case view buttons on one line, a quiet text link
-   for "Find a month with availability", and day colours readable inside a chosen period (no band burying them). */
+/* Menu calm (approved September look): sentence-case view buttons on one line, a quiet text link
+   for "Next month with charters", and day colours readable inside a chosen period (no band burying them). */
 .ke .ke-availability-view{min-height:var(--ctl);font:500 var(--t-ui)/1.25 'Forma DJR Micro',Arial,sans-serif;text-transform:none;letter-spacing:0}
 .ke .ke-find-dates{display:table;width:auto;max-width:none;min-height:0;margin:calc(var(--u) * 1.2) auto 0;padding:0 0 3px;border:0;border-radius:0;
   background:linear-gradient(currentColor,currentColor) 0 100%/100% var(--hair) no-repeat;color:var(--navy);font:400 var(--t-meta)/1.3 'Forma DJR Micro',Arial,sans-serif;text-transform:none;letter-spacing:0}
@@ -487,13 +429,13 @@
 /* Owner (27 Oct): one text size. Everything that is not a heading is 13px; weight (400/500) and colour carry the hierarchy.
    Headings stay larger: panel titles, section heads, month names, banner and map names. */
 .ke{--t-meta:13px;--t-ui:13px;--t-data:13px;--fs-xs:13px;--fs-s:13px;--fs-b:13px;--fs-h5:13px}
-.ke .ke-trip h4,.ke .ke-srow-top b{font-size:13px;font-weight:500}
+.ke .ke-trip h4{font-size:13px;font-weight:500}
 .ke .ke-nights{font-size:13px;white-space:nowrap}
-.ke .ke-trip p,.ke .ke-activity,.ke .ke-select-toggle,.ke .ke-select-value,.ke .ke-select-opt,.ke .ke-status,.ke .ke-empty,.ke .ke-intro p{font-size:13px}
+.ke .ke-trip p,.ke .ke-activity,.ke .ke-status,.ke .ke-empty,.ke .ke-intro p{font-size:13px}
 .ke .ke-trip{grid-template-columns:max(88px,calc(var(--u) * 12.8)) minmax(0,1fr) auto}
-/* No divider between the filter and the first charter. */
-.ke .ke-trip-list>.ke-trip:first-child{border-top:0}
-/* Nights share the date line (as in the sidebar rows), so the card is two columns and status labels stay on one line. */
+/* No divider above the first charter. */
+.ke .ke-schedule-list>.ke-trip:first-child{border-top:0}
+/* Nights share the date line, so the card is two columns and status labels stay on one line. */
 .ke .ke-trip{grid-template-columns:max(88px,calc(var(--u) * 12.8)) minmax(0,1fr)}
 .ke .ke-trip-top{display:flex;align-items:baseline;justify-content:space-between;gap:calc(var(--u) * 1)}
 .ke .ke-trip .ke-status{white-space:nowrap}

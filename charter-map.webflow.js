@@ -50,17 +50,6 @@ function tripsInMonth(trips, location, {year,month}, today=dateKey()) {
   const last=new Date(Date.UTC(year,month+1,0)).toISOString().slice(0,10);
   return tripsAt(trips,location).filter(trip=>trip.end>=today&&trip.start<=last&&trip.end>=first);
 }
-// Search forward from the displayed month, then wrap to the first upcoming availability.
-// Use day-level status so an overlapping booking cannot produce a false shortcut.
-function availableMonth(trips, location, from, today=dateKey()) {
-  const range=monthRange(trips,location,today),matches=[];
-  for(let year=range.min.year;year<=range.max.year;year++){
-    monthAvailability(trips,location,year,today).forEach((available,month)=>{
-      if(available)matches.push({year,month});
-    });
-  }
-  return matches.find(value=>monthIndex(value)>=monthIndex(from))||matches[0]||null;
-}
 // For the month picker: which months of a year contain at least one bookable (available or tentative) upcoming day.
 function monthAvailability(trips, location, year, today=dateKey()) {
   return Array.from({length:12},(_,month)=>{
@@ -82,21 +71,22 @@ function monthCells(year,month,trips,location,today=dateKey()) {
 }
 // Date-range search (persistent schedule sidebar). A sailing matches when it overlaps the chosen dates at all.
 const overlapsRange = (trip, from, to=from) => !from || (trip.start<=to && trip.end>=from);
-function calendarPeriod(range, {year,month}) {
-  return range.from ? {from:range.from,to:range.to||range.from} : {
-    from:new Date(Date.UTC(year,month,1)).toISOString().slice(0,10),
-    to:new Date(Date.UTC(year,month+1,0)).toISOString().slice(0,10)
-  };
+// A charter can be booked until it sails: one that has already left is no longer listed or shown as open.
+const notSailed = (trips, today=dateKey()) => trips.filter(t=>t.start>=today);
+// The schedule menu's list: bookable charters, optionally only those visiting `ids`, overlapping `month`, or overlapping from..to.
+function listCharters(trips, {ids=null, month=null, from=null, to=from}={}, today=dateKey()) {
+  const first=month&&new Date(Date.UTC(month.year,month.month,1)).toISOString().slice(0,10);
+  const last=month&&new Date(Date.UTC(month.year,month.month+1,0)).toISOString().slice(0,10);
+  return notSailed(trips,today).filter(t=>t.status==='available'&&(!ids||t.locations.some(id=>ids.includes(id)))
+    &&(!month||(t.start<=last&&t.end>=first))&&overlapsRange(t,from,to||from)).sort((a,b)=>a.start.localeCompare(b.start));
 }
-function tripsInRange(trips, from=null, to=from, today=dateKey()) {
-  return trips.filter(t=>t.status==='available'&&t.end>=today&&overlapsRange(t,from,to)).sort((a,b)=>a.start.localeCompare(b.start));
+// Every month that one of the listed charters touches, in order ("By month" opens on the first; "Next month with charters" steps through).
+function charterMonths(list) {
+  const seen=new Map();
+  list.forEach(t=>{for(let i=monthIndex({year:+t.start.slice(0,4),month:+t.start.slice(5,7)-1});i<=monthIndex({year:+t.end.slice(0,4),month:+t.end.slice(5,7)-1});i++)seen.set(i,{year:Math.floor(i/12),month:i%12});});
+  return [...seen.keys()].sort((a,b)=>a-b).map(i=>seen.get(i));
 }
 const dayNumber = key => Date.parse(`${key}T00:00:00Z`)/864e5;
-// Closest upcoming sailings to dates that have none, by the number of days between them and the chosen range.
-function nearestTrips(trips, from, to=from, count=2, today=dateKey()) {
-  const gap=t=>t.start>to?dayNumber(t.start)-dayNumber(to):dayNumber(from)-dayNumber(t.end);
-  return tripsInRange(trips,null,null,today).filter(t=>!overlapsRange(t,from,to)).sort((a,b)=>gap(a)-gap(b)||a.start.localeCompare(b.start)).slice(0,count);
-}
 // Range calendar cells: every location at once, coloured like the destination calendar.
 function rangeCells(year, month, trips, today=dateKey()) {
   const first=new Date(Date.UTC(year,month,1));
@@ -388,13 +378,15 @@ const flipText=text=>`<span class="ke-flip"><span class="ke-flip-txt">${text}</s
 const chevron='<svg class="ke-chevron" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5 6 6.5l5-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 // Kudanil Explorer side view (designer's Boat 7), bow to the right.
 const boatMarkup=`<svg class="ke-boat-hull" viewBox="0 0 445.06 201.96" fill="currentColor" aria-hidden="true"><path d="M220.27,201.89q-93.54,0-187.08.07c-3.2,0-5.79-.68-8-3.4a37.46,37.46,0,0,0-4.1-3.54,2.45,2.45,0,0,0-1.88-.46c-5.74,0-11.47,0-17.2.07-1.55,0-2-.55-2-2.29.11-2.29.1-4.59,0-6.88,0-1.4.44-1.76,1.55-1.73,2.64.06,5.29-.06,7.94.05,1.27.06,1.61-.47,1.56-1.84h0c-.12-.84,1.07-6.94,3.79-19.17,48.51-1,87.21-1.07,114.27-.93,13.11.07,41.4.12,98,.23,14.83,0,25.3,0,39.82-.34,17.28-.47,39.29-1.47,54-2.14l8-.37c6.43-.31,10.12-.51,29.34-1.41,12.28-.58,24.57-1.12,36.85-1.7l35.69-1.73c1.6-.08,3.19-.08,4.79-.15,1.42-.06,1.5.58.83,1.82q-4.17,7.68-8.31,15.4c-4.89,9.17-9.81,18.33-14.61,27.58-1.07,2.06-2.18,2.94-4.39,2.93Q314.72,201.84,220.27,201.89Z"/><path d="M367.6,104.45c1-.19,1.19.18.88,1.26-1.21,4.25-2.34,8.52-3.57,12.75a3,3,0,0,0,.08,2.33c.81,1.67,1.56,3.37,2.32,5.06,1.11,2.46.92,2.86-1.43,2.87q-14.55,0-29.11.05l-261.68,0c-1.93,0-3.86,0-5.79,0-1.21,0-1.56-.48-1.21-1.86.87-3.44,2.34-6.65,2.94-10.21.18-1,1.14-1,1.93-1h25.8q64.59,0,129.19,0c2.43,0,4.29,1.85,6.35,3a9.43,9.43,0,0,0,4.58,1.19c17.48,0,35-.41,52.43-.06,2.14,0,2.13,0,2.13-2.48,0-2.93,0-5.86,0-8.79,0-1.12-.24-1.57-1.29-1.56q-19,0-38,0c-1.08,0-1.3.51-1.28,1.6,0,2.16,0,4.33,0,6.49,0,1-.28,1.47-1.24,1.46-4.68,0-9.37,0-14.06,0a3.18,3.18,0,0,1-1.82-.78c-3.89-2.64-7.78-5.28-11.66-8a4.7,4.7,0,0,0-2.81-.85q-69.56,0-139.11,0c-2.39,0-2.39,0-2.37-2.67v-.57c0-4.69,0-4.67,4.09-5.11,8.88-1,17.75-2,26.63-3q24.67-2.75,49.34-5.53c1.55-.18,2.07.27,2,2.11-.13,4-.06,4,3.53,4q55.58,0,111.15,0a3.45,3.45,0,0,0,3.19-1.77c.8-1.21,1.8-2.25,2.65-3.41s1.85-.54,2.79-.58c3-.13,2.65.52,2.65-3,0-14.27,0-28.54.06-42.8,0-1.61-.4-2.06-1.76-2-3.42.1-6.84,0-10.26.06-1.33,0-1.88-.54-1.83-2.14.11-3.35-.77-4.15,3.42-3.91,1.76.1,2.11-.63,2.06-2.49q-.18-7.64-.06-15.28c0-1.65-.44-2.18-1.76-1.93a3.74,3.74,0,0,1-.67,0c-3,0-2.94,0-3-3.49,0-1.58.65-1.94,1.79-2.05s2.74.67,3.41-.47c.55-.92.17-2.58.18-3.92,0-1.9.06-3.8,0-5.7,0-1.1.37-1.38,1.28-1.4,2.66-.06,2.85.07,2.85,3.1,0,10.57,0,21.14,0,31.71,0,1.51.32,2,1.65,1.93a49.71,49.71,0,0,1,5.46-.06c1.19,0,1-.87,1-1.66s.35-1.9-1-1.84c-1.1.06-2.21,0-3.31,0-.78,0-1.33-.28-1.32-1.26,0-2.47-.3-5,.26-7.41,1.14-4.89,4.29-7.75,8.75-7.82,3.92-.06,7.51,3.49,8.5,8,.53,2.4.23,4.8.34,7.2,0,1-.53,1.29-1.3,1.29-1.6,0-3.2.12-4.79,0-1.27-.1-1.3.68-1.29,1.74s-.09,1.87,1.22,1.82c2.43-.1,4.85,0,7.28,0,1.28,0,1.76.48,1.74,2-.07,4.79.12,4.06-3.57,4.11-1.6,0-3.2,0-4.8,0-.72,0-1.15.15-1.07,1.16.25,3.43.46,6.85.67,10.28.08,1.34.92,1,1.58,1,7.28,0,14.56,0,21.84,0,4.15,0,3.49-.67,3.62,4.13,0,1.44-.38,1.88-1.61,1.86-4.19-.07-8.38,0-12.57,0-3.64,0-7.28,0-10.92,0-.18,0-.83-.22-1.19.11a1.2,1.2,0,0,0-.24,1L300,89a1.58,1.58,0,0,0,.41,1.26,1.53,1.53,0,0,0,1.12.27c1.16-.11,24.11-.1,56.24,0,2.61,1.57,9.39,5.78,11.13,8.46.27.4.94,1.44.58,2-.18.28-.71.34-1.69.34q-20.76,0-41.52,0-12.17,0-24.32,0c-1,0-1.8,0-1.78,1.63s.9,1.44,1.77,1.44h62.69c.87,0,1.75.08,2.63.12l.17.31Zm-34.21,15.16h0c1.65,0,3.3,0,5,0a1.23,1.23,0,0,0,1.46-1.1c.65-2.84,1.34-5.67,2-8.51.22-1-.18-1.24-.95-1.23-3.3,0-6.61,0-9.92,0-.74,0-1.1.31-1.29,1.1-.69,2.88-1.38,5.75-2.13,8.61-.24.9,0,1.14.73,1.13C330,119.59,331.68,119.61,333.39,119.61Zm-17,0h0c1.54,0,3.08-.07,4.62,0,1,.06,1.56-.24,1.82-1.53.52-2.65,1.14-5.29,1.88-7.88.4-1.39-.1-1.48-1-1.46-3.19,0-6.38,0-9.57,0-.78,0-1.17.27-1.37,1.19-.61,2.77-1.26,5.53-2,8.26-.33,1.23.11,1.41,1,1.38C313.29,119.56,314.83,119.59,316.37,119.59Zm34.14,0h0c1.66,0,3.31,0,5,0,.89,0,1.27-.37,1.48-1.33.59-2.71,1.2-5.42,1.91-8.09.32-1.21,0-1.43-1-1.42-3.2,0-6.39,0-9.59,0a1.25,1.25,0,0,0-1.41,1.17c-.65,2.76-1.31,5.51-2,8.25-.3,1.16.07,1.46,1,1.42C347.43,119.56,349,119.6,350.51,119.6Z"/><path d="M258.31,154.23H82.47c-1.76,0-3.53-.09-5.29,0-1.24.06-1.63-.46-1.61-1.88.06-6.17.08-12.35,0-18.53,0-1.56.36-2,1.76-2q46.56.07,93.13,0,87.17,0,174.34-.05c1.6,0,2.13.48,2,2.34-.13,2.34.11,4.72,0,7.06-.1,1.67.52,1.87,1.7,1.81,5.9-.3,11.79-.54,17.69-.79l69.41-3c2.64-.11,5.29-.25,7.93-.37.49,0,1.05-.15,1.36.42s-.05,1.2-.34,1.74c-1.18,2.21-2.38,4.41-3.53,6.65-.5,1-1.28.81-2,.84-23,1-46.06,2-69.1,2.87-27.05,1.08-54.1,2.49-81.17,2.86-10.14.13-20.29,0-30.43,0Zm-104.87-5.6c10.15,0,20.29,0,30.43,0,1.31,0,1.87-.31,1.8-2-.11-2.67-.11-5.35,0-8,.06-1.5-.44-1.82-1.61-1.8-5.13.05-10.25,0-15.38,0-15.21,0-30.43,0-45.64,0-1.6,0-1.94.62-1.88,2.27.1,2.54.12,5.09,0,7.63-.07,1.57.4,1.91,1.68,1.9C133.05,148.61,143.25,148.63,153.44,148.63Zm113.68,0v-.06c5.84,0,11.69,0,17.53,0,1,0,1.33-.35,1.31-1.52-.06-2.92,0-5.86,0-8.78,0-1.06-.25-1.46-1.2-1.45q-17.61,0-35.22,0c-1,0-1.23.4-1.21,1.45,0,2.8.11,5.61,0,8.4-.08,1.68.47,2,1.78,2C255.76,148.62,261.44,148.66,267.12,148.66Zm-54.58,0v0c2.7,0,5.4-.05,8.1,0,1.05,0,1.45-.27,1.42-1.57-.08-2.86-.08-5.73,0-8.59,0-1.31-.36-1.62-1.4-1.61-5.4,0-10.8,0-16.2,0-1,0-1.36.31-1.33,1.49.06,2.93.08,5.86,0,8.78,0,1.33.42,1.6,1.44,1.58C207.25,148.63,209.89,148.67,212.54,148.67Z"/><path d="M41.9,155.47c-8.34.06-16.68.11-25,.21-1.11,0-1.5-.4-1.19-2.11.36-2.06.57-4.18.81-6.29.18-1.54.66-2.2,1.83-2.15,5.37.21,10.74.31,16.11.39,1,0,1.39.4,1.36,2-.08,3.87,0,3.88,2.69,4l.53,0c3,.08,3,.08,3.35-4.29.07-1.06.38-1.44,1.08-1.42,8.91.23,17.82.44,26.72.68,1.07,0,1.28.66.73,2.09-.72,1.9-1.5,3.75-2.24,5.63-.44,1.12-1.16,1-1.85,1l-24.9.23Z"/><path d="M237.45,79.16c2.26-.08,4.52-.08,6.78,0,1.76,0,2.23.62,2.24,2.66,0,3.06,0,6.12,0,9.17,0,1.34-.3,2-1.58,1.94-5.57,0-11.14,0-16.71,0-1.17,0-1.55-.5-1.53-1.81.06-3.31.09-6.62,0-9.93,0-1.45.59-1.9,1.62-2.07a4.29,4.29,0,0,1,1-.05C230.62,79.19,235.36,79.22,237.45,79.16Z"/><path d="M376.44,138.4c-1.75.1-3.52.17-5.27.33-1.1.09-1.63-.27-1.61-1.67.06-3.24.06-6.49,0-9.73,0-1.16.4-1.61,1.37-1.61,3.74,0,7.49,0,11.23,0,1,0,1.4.51,1.39,1.61,0,3.12,0,6.24,0,9.36,0,1.16-.4,1.58-1.37,1.56-1.93,0-3.86,0-5.78,0Z"/><path d="M367.6,104.45l-.14.32-.17-.31A.27.27,0,0,1,367.6,104.45Z"/></svg>`;
-// One view switch for the schedule sidebar and the destination drawer; both follow the same `charterView`.
-const viewToggle=(calendar,results)=>`<div class="ke-availability-views" role="group" aria-label="Choose how to browse charters">
-            <button type="button" class="ke-availability-view" data-charter-view="all" aria-pressed="false" aria-controls="${results}">View all available charters</button>
-            <button type="button" class="ke-availability-view" data-charter-view="month" aria-pressed="true" aria-controls="${calendar} ${results}">View charters by month</button>
+// One menu, two ways to browse: every charter, or month by month.
+const viewToggle=(calendar,results)=>`<div class="ke-availability-views" role="group" aria-label="How to see charters">
+            <button type="button" class="ke-availability-view" data-charter-view="all" aria-pressed="true" aria-controls="${results}">All charters</button>
+            <button type="button" class="ke-availability-view" data-charter-view="month" aria-pressed="false" aria-controls="${calendar} ${results}">By month</button>
           </div>`;
-const legend='<div class="ke-legend"><span><i class="available"></i>Available</span><span><i class="unavailable"></i>Unavailable</span><span><i class="tentative"></i>Tentative</span></div>';
-// Month header and month/year picker overlay. Both calendars (sidebar range, destination by month) use it, wired by monthNav.
+const backGlyph='<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M8 1.5 3.5 6 8 10.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+// "On hold" shows only when a held charter exists (the mount unhides it).
+const legend='<div class="ke-legend"><span><i class="available"></i>Available</span><span><i class="unavailable"></i>Unavailable</span><span data-holds hidden><i class="tentative"></i>On hold</span></div>';
+// Month header and month/year picker overlay over the day grid, wired by monthNav.
 const calendarFrame=(id,grid)=>`<div class="ke-calendar-top"><button type="button" class="ke-calendar-arrow" data-step="-1" aria-label="Previous month">‹</button>
     <button type="button" class="ke-period" aria-expanded="false" aria-controls="${id}" aria-haspopup="dialog"><span class="ke-month" aria-live="polite"></span>${chevron}</button>
     <button type="button" class="ke-calendar-arrow" data-step="1" aria-label="Next month">›</button></div>
@@ -413,15 +405,6 @@ const REGION_ART=['mentawai-islands','komodo-beyond','banda-spice-island','raja-
 const MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const shiftKey=(key,{days=0,months=0})=>{const d=new Date(`${key}T00:00:00Z`);d.setUTCMonth(d.getUTCMonth()+months);d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10);};
 const MONTHS_LONG=['January','February','March','April','May','June','July','August','September','October','November','December'];
-// The live schedule page's filter field: underlined value, grey chevron with a hover swap, white option panel.
-const dropdownGlyph='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m17.422 8.452 1.06 1.061-5.777 5.779a.995.995 0 0 1-1.413 0l-5.78-5.779 1.06-1.06 5.425 5.424z" fill="#191919" fill-opacity=".6"/></svg>';
-const filterSelect=(key,label,choices)=>`<div class="ke-select" data-filter="${key}">
-  <button type="button" class="ke-select-toggle" aria-haspopup="listbox" aria-expanded="false" aria-label="${label}: ${choices[0][1]}">
-    <span class="ke-select-value">${label}</span><span class="ke-select-ic">${dropdownGlyph}${dropdownGlyph}</span></button>
-  <div class="ke-select-opts" role="listbox" aria-label="${label}" inert>${choices.map(([value,name])=>
-    `<button type="button" class="ke-select-opt" role="option" data-value="${value}" aria-selected="${value===''}">${name}</button>`).join('')}</div>
-  <span class="ke-select-line" aria-hidden="true"><span></span></span>
-</div>`;
 
 /** One mount point and a destroy hook allow this to live inside a Webflow/Barba page.
  * Pass CMS-normalized trips, locations, regions and mapUrl when deploying. */
@@ -446,12 +429,11 @@ async function mountCharterMap(root,options={}) {
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const calibrate=new URLSearchParams(location.search).has('calibrate');
   let view='world',activeRegion=null,activeLocation=null,camera={x:0,y:0,scale:1},flight=null,frame=0;
-  let drift={x:0,y:0},pointer={x:0,y:0},disposed=false,charterView='month';
+  let drift={x:0,y:0},pointer={x:0,y:0},disposed=false,charterView='all',pickedDay=null;
   let regionRestScale=1,hovered=null;
   const canHover=matchMedia('(hover: hover)'),contactUrl=options.contactUrl||'https://www.kudanil.com/contact';
-  // Schedule sidebar: chosen dates (inclusive keys), the month its calendar shows, and the phone sheet state.
-  // Default period: the next six months (like Meta's preset ranges). Enquiries only quote dates the visitor picked.
-  let range={from:dateKey(),to:shiftKey(dateKey(),{months:6})},rangeChosen=false,rangeMonth=null,regionCounts={};
+  // Quick dates the visitor picked (inclusive keys; none by default) and the month "By month" shows. Enquiries quote picked dates only.
+  let range={from:null,to:null},rangeMonth=null;
   // Boat marker: where the yacht is today, or on the chosen departure date. `shown` glides toward `target`.
   const voyages=options.voyages||VOYAGES;
   const places={...Object.fromEntries(LOCATIONS.map(p=>[p.name.toLowerCase(),p])),...(options.ports||PORTS),
@@ -478,18 +460,18 @@ async function mountCharterMap(root,options={}) {
     <div class="ke-region-list" aria-label="Sailing regions">${regions.map((region,index)=>
       `<button type="button" class="ke-btn" data-region="${escapeHTML(region.id)}"><span class="ke-region-num" aria-hidden="true">${index+1}</span>${flipText(escapeHTML(region.name))}</button>`).join('')}</div>
     <div class="ke-destination-nav" hidden aria-label="Switch destination"><button type="button" data-destination="prev" aria-label="Previous destination"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M8 1.5 3.5 6 8 10.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button type="button" data-destination="next" aria-label="Next destination"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 1.5 8.5 6 4 10.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
-    <aside class="ke-schedule" aria-labelledby="${titleId}-schedule">
-      <button type="button" class="ke-schedule-bar" aria-expanded="false"><span class="ke-schedule-bar-dates"></span><span class="ke-schedule-bar-count"></span>${chevron}</button>
+    <aside class="ke-schedule" aria-labelledby="${titleId}">
+      <button type="button" class="ke-schedule-bar" aria-expanded="false"><span class="ke-schedule-bar-title"></span><span class="ke-schedule-bar-count"></span>${chevron}</button>
       <div class="ke-schedule-scroll">
         <div class="ke-schedule-head">
-          <h2 id="${titleId}-schedule">Schedule</h2>
+          <h2 id="${titleId}">Schedule</h2>
           <button type="button" class="ke-collapse" data-collapse aria-label="Hide schedule" aria-expanded="true"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4 1.5 8.5 6 4 10.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          <p class="ke-range-line"><span class="ke-range-text"></span><button type="button" class="ke-clear-range" data-clear-range aria-label="Clear dates">Clear</button></p>
+          <p class="ke-menu-line"></p>
         </div>
-        <div class="ke-availability-controls">${viewToggle(`${pickerId}-range-cal`,`${pickerId}-schedule-results`)}</div>
-        <section class="ke-range" id="${pickerId}-range-cal" aria-label="Choose your travel dates">${calendarFrame(`${pickerId}-range`,'<div class="ke-range-grid"></div>')}
-          <button type="button" class="ke-find-dates" data-find-range>Find a month with availability</button></section>
-        <section class="ke-schedule-results" id="${pickerId}-schedule-results" aria-label="Charters for your dates"><h3></h3><div class="ke-schedule-list"></div></section>
+        <div class="ke-availability-controls">${viewToggle(`${pickerId}-cal`,`${pickerId}-results`)}</div>
+        <section class="ke-range" id="${pickerId}-cal" aria-label="Charters by month" hidden>${calendarFrame(`${pickerId}-picker`,'<div class="ke-range-grid"></div>')}
+          <button type="button" class="ke-find-dates" data-find-month>Next month with charters</button></section>
+        <section class="ke-schedule-results" id="${pickerId}-results" aria-label="Charters"><div class="ke-schedule-list"></div></section>
       </div>
     </aside>
     <button type="button" class="ke-expand" data-collapse hidden><span>See Available Dates</span><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 4l4 4-4 4M8.5 4l4 4-4 4"/></svg></button>
@@ -509,37 +491,9 @@ async function mountCharterMap(root,options={}) {
         </div>
       </div>
     </div>
-    <aside class="ke-drawer" aria-labelledby="${titleId}" inert>
-      <div class="ke-drawer-scroll">
-        <!-- Small supporting text (eyebrow, subtitle, view hint) removed at the user's request; structure unchanged. -->
-        <!-- Sticky header: the title and close control stay in reach at any scroll position (accessibility). -->
-        <div class="ke-drawer-head">
-          <button type="button" class="ke-close" aria-label="Close charter details">×</button>
-          <h2 id="${titleId}"></h2>
-        </div>
-        <a class="ke-discover" target="_blank" rel="noopener">Discover more about this location</a>
-        <div class="ke-availability-controls">
-          ${viewToggle(`${pickerId}-calendar`,`${pickerId}-results`)}
-        </div>
-        <section class="ke-calendar" id="${pickerId}-calendar" aria-label="Charter availability by month" hidden>
-          ${calendarFrame(pickerId,'<div class="ke-calendar-grid"></div>')}
-          <button type="button" class="ke-find-dates" data-find-dates>Find a month with availability</button>
-        </section>
-        <section class="ke-trips" id="${pickerId}-results" aria-label="Charter results">
-          <div class="ke-trips-head"><h3></h3>
-            <div class="ke-filters" role="group" aria-label="Filter charters">
-              ${filterSelect('type','Charter type',[['','All charter types'],['exclusive','Private charter'],['cabin','Cabin booking']])}
-              ${filterSelect('month','Month',[['','Any month'],...MONTHS_LONG.map((name,index)=>[String(index),name])])}
-              ${filterSelect('year','Year',[['','Any year'],...Array.from({length:3},(_,i)=>{const year=String(new Date().getFullYear()+i);return [year,year];})])}
-            </div>
-          </div>
-          <div class="ke-trip-list"></div>
-        </section>
-      </div>
-    </aside>
     <p class="ke-sr" role="status" aria-live="polite"></p>`;
   const $=selector=>root.querySelector(selector);
-  const stage=$('.ke-stage'),geometry=$('.ke-geometry'),map=$('.ke-map'),drawer=$('.ke-drawer');
+  const stage=$('.ke-stage'),geometry=$('.ke-geometry'),map=$('.ke-map'),menu=$('.ke-schedule');
   const regionToggle=$('.ke-region-toggle'),regionMenu=$('.ke-region-options'),regionOptions=[...root.querySelectorAll('[data-region-option]')];
   const nav=$('.ke-nav'),intro=$('.ke-intro'),status=$('[role=status]'),destinationNav=$('.ke-destination-nav');
   const boat=$('.ke-boat');
@@ -552,16 +506,17 @@ async function mountCharterMap(root,options={}) {
     return Math.max(0,Math.min(bottom,stage.clientHeight/3));
   }
   function syncHeaderInset() {root.style.setProperty('--ke-header',`${headerInset()}px`);}
-  function viewport(withDrawer=false) {
+  function viewport(withMenu=false) {
     const width=stage.clientWidth,height=stage.clientHeight,top=headerInset();
-    if(withDrawer&&width<=767) return {x:48,y:top+60,width:Math.max(80,width-96),height:Math.max(60,height-drawer.offsetHeight-top-76)};
-    // Desktop: the schedule sidebar (or the drawer over it) always holds the right-hand column.
-    if(withDrawer) return {x:0,y:top,width:Math.max(120,width-drawer.offsetWidth),height:height-top};
+    // Phones: a destination frames itself above the open sheet.
+    if(withMenu&&width<=767) return {x:48,y:top+60,width:Math.max(80,width-96),height:Math.max(60,height-(root.dataset.schedule==='open'?menu.offsetHeight:scheduleBar())-top-76)};
+    // Desktop: the menu holds the right-hand column unless it is hidden.
+    if(withMenu) return {x:0,y:top,width:Math.max(120,width-side()),height:height-top};
     if(width<=767) return {x:0,y:top+90,width,height:Math.max(120,height-top-180-scheduleBar())};
     return {x:0,y:top+90,width:Math.max(120,width-side()),height:Math.max(120,height-top-180)};
   }
   // Desktop width the schedule sidebar takes from the map; zero once collapsed.
-  const side=()=>stage.clientWidth>767&&root.dataset.sidebar!=='collapsed'?drawer.offsetWidth:0;
+  const side=()=>stage.clientWidth>767&&root.dataset.sidebar!=='collapsed'?menu.offsetWidth:0;
   // Phones keep the schedule as a bottom bar; its height is subtracted from the map pane.
   const scheduleBar=()=>stage.clientWidth<=767?$('.ke-schedule-bar').offsetHeight:0;
   function worldCamera() {
@@ -753,88 +708,135 @@ async function mountCharterMap(root,options={}) {
     if(view!=='world')hovered=null;
     renderGlow();
     status.textContent=view==='world'?'Showing all regions':view==='region'?`Showing ${lookup[activeRegion].name} destinations`:`Charter details for ${lookup[activeLocation].name}`;
-    // The drawer covers the sidebar while a destination is open.
-    $('.ke-schedule').inert=view==='location'||root.dataset.sidebar==='collapsed';if(view==='location')setSheet(false);
-    renderSchedule();
+    menu.inert=root.dataset.sidebar==='collapsed';
+    renderMenu();
   }
-  // ---- Schedule sidebar: date range, regional results, map availability ----
-  const rangeEnd=()=>range.to||range.from;
-  const currentRange=()=>range;
+  // ---- The schedule menu: one panel for the overview, a region and a destination ----
   // DD MMMM YYYY, e.g. 07 May 2027: used where the full period is spelled out (quick dates field and its Departure/Return boxes).
   const longDate=key=>new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(`${key}T00:00:00Z`));
   const shortDate=(key,year=true)=>new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',...(year?{year:'numeric'}:{}),timeZone:'UTC'}).format(new Date(`${key}T00:00:00Z`));
   const rangeLabel=()=>!range.from?'':range.to&&range.to!==range.from?`${shortDate(range.from,range.from.slice(0,4)!==range.to.slice(0,4))} – ${shortDate(range.to)}`:shortDate(range.from);
-  const period=()=>calendarPeriod(range,rangeMonth);
-  const periodLabel=()=>range.from?rangeLabel():`${MONTHS_LONG[rangeMonth.month]} ${rangeMonth.year}`;
-  const statusLabel=t=>t.type==='cabin'?'Available For Cabin Booking':'Available For Private Charter';
-  const charterCount=n=>`${n} ${n===1?'charter':'charters'}`,noCharters='No upcoming charters available for selected period';
-  const nearMarkup=list=>list.length?`<div class="ke-near"><span>Nearest</span>${list.map(t=>
-    `<button type="button" data-set-range="${escapeHTML(t.start)}|${escapeHTML(t.end)}">${escapeHTML(t.dates)}</button>`).join('<span class="ke-near-sep" aria-hidden="true">·</span>')}</div>`:'';
+  const monthName=({year,month})=>`${MONTHS_LONG[month]} ${year}`;
+  const charterCount=n=>`${n} ${n===1?'charter':'charters'}`;
+  // The place the menu shows: the open destination, else the open region, else everywhere.
+  const placeId=()=>view==='location'?activeLocation:view==='region'?activeRegion:null;
+  const idsOf=id=>!id?null:lookup[id].members?[...lookup[id].members]:[id];
+  const dates=()=>range.from?{from:range.from,to:range.to||range.from}:{};
+  // Bookable charters for a place, within the quick dates if picked; "By month" narrows to the month on screen.
+  const listFor=(id,monthly=charterView==='month')=>listCharters(trips,{ids:idsOf(id),...dates(),...(monthly?{month:rangeMonth}:{})});
+  const monthsFor=id=>charterMonths(listFor(id,false));
+  // The calendar keeps booked and held days (red, on hold) but drops charters that have already sailed.
+  const calendarTrips=id=>{const ids=idsOf(id);return notSailed(trips).filter(t=>!ids||t.locations.some(l=>ids.includes(l)));};
+  // "By month" opens on the place's first month with charters, unless the month on screen already has some.
+  function fitMonth() {
+    const months=monthsFor(placeId());
+    if(rangeMonth&&months.some(m=>monthIndex(m)===monthIndex(rangeMonth)))return false;
+    rangeMonth=months[0]||monthRange(trips,null).min;return true;
+  }
   function paintAvailability() {
-    const {from,to}=period(),found=tripsInRange(trips,from,to);
-    regionCounts=Object.fromEntries(regions.map(region=>[region.id,found.filter(t=>t.locations.some(id=>region.members.includes(id))).length]));
     markers.forEach(m=>{
-      const count=m.isRegion?regionCounts[m.point.id]:found.filter(t=>t.locations.includes(m.point.id)).length;
+      const count=listFor(m.point.id).length;
       m.anchor.toggleAttribute('data-unavailable',!count);
       if(!m.isRegion)return;
       // Phones list regions as buttons under the map; they dim the same way.
       root.querySelector(`.ke-region-list [data-region="${m.point.id}"]`)?.toggleAttribute('data-unavailable',!count);
-      m.button.setAttribute('aria-label',`${m.point.name} region, ${count?charterCount(count):'Unavailable'} in ${periodLabel()}`);
+      m.button.setAttribute('aria-label',`${m.point.name} region, ${count?charterCount(count):'no charters'}`);
     });
     renderGlow();
   }
-  function dateGrid(cells,today,range=currentRange()) {
+  // Day grid. `menuDays` (the menu calendar) makes only bookable days buttons and marks the tapped charter's days;
+  // without it (quick dates) every future day is a button for picking a range.
+  function dateGrid(cells,today,range,menuDays=null) {
     const end=range.to||range.from;
     // Same-colour neighbours in a week join into one band (runs), like Kumo/Meta pickers; ends of a run are rounded.
-    const tone=cell=>!cell||cell.outside||cell.past?'':(cell.key===range.from||(range.to&&cell.key===range.to))?'cap':`${cell.status}${range.from&&cell.key>range.from&&cell.key<end?'-in':''}`;
+    const tone=cell=>!cell||cell.outside||cell.past?'':(cell.key===range.from||(range.to&&cell.key===range.to))?'cap':menuDays?.has(cell.key)?'picked':`${cell.status}${range.from&&cell.key>range.from&&cell.key<end?'-in':''}`;
     return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map(day=>`<span class="ke-weekday" aria-label="${day}">${day[0]}</span>`).join('')+
       cells.map((cell,i)=>{
         // Days outside the month are plain spacers (no hover, no box). Always six weeks, so the panel never changes height between months.
         if(cell.outside)return '<span class="ke-rday-pad" aria-hidden="true"></span>';
         const banded=range.to&&range.to>range.from,inside=range.from&&cell.key>range.from&&cell.key<end;
-        const classes=['ke-rday',cell.past?'past':cell.status,cell.key===range.from&&'is-start',range.to&&cell.key===range.to&&'is-end',banded&&(cell.key===range.from||cell.key===range.to)&&'has-band',inside&&'is-inside',cell.key===today&&'is-today',tone(cell)&&i%7&&tone(cells[i-1])===tone(cell)&&'run-l',tone(cell)&&i%7<6&&tone(cells[i+1])===tone(cell)&&'run-r'].filter(Boolean).join(' ');
-        return `<button type="button" class="${classes}" data-day="${cell.key}" ${cell.past?'disabled':''} aria-pressed="${Boolean(cell.key===range.from||cell.key===range.to||inside)}"
-          aria-label="${shortDate(cell.key)}${cell.past?'':`, ${cell.status}`}"><span>${cell.day}</span></button>`;
+        const classes=['ke-rday',cell.past?'past':cell.status,cell.key===range.from&&'is-start',range.to&&cell.key===range.to&&'is-end',banded&&(cell.key===range.from||cell.key===range.to)&&'has-band',inside&&'is-inside',menuDays?.has(cell.key)&&'is-picked',cell.key===today&&'is-today',tone(cell)&&i%7&&tone(cells[i-1])===tone(cell)&&'run-l',tone(cell)&&i%7<6&&tone(cells[i+1])===tone(cell)&&'run-r'].filter(Boolean).join(' ');
+        const label=`${shortDate(cell.key)}${cell.past?'':`, ${cell.status==='tentative'?'on hold':cell.status}`}`;
+        // In the menu only bookable days react; nothing inert takes hover or taps.
+        if(menuDays&&(cell.past||cell.status!=='available'))return `<span class="${classes}" aria-label="${label}"><span>${cell.day}</span></span>`;
+        return `<button type="button" class="${classes}" data-day="${cell.key}" ${cell.past?'disabled':''} aria-pressed="${Boolean(cell.key===range.from||cell.key===range.to||inside||menuDays?.has(cell.key))}"
+          aria-label="${label}"><span>${cell.day}</span></button>`;
       }).join('');
   }
   function syncView() {
-    $('.ke-range').hidden=charterView!=='month';
     root.querySelectorAll('[data-charter-view]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.charterView===charterView)));
   }
-  // Always shown (owner, 29 Oct): the next month after the one on screen with availability, wrapping to the first.
-  const findMonth=location=>availableMonth(trips,location,{year:rangeMonth.year+(rangeMonth.month===11?1:0),month:(rangeMonth.month+1)%12});
-  function renderRange() {
-    const today=dateKey(),bounds=monthRange(trips,null,today);
-    rangeMonth=clampMonth(rangeMonth||bounds.min,bounds);rangeNav.sync();
-    $('.ke-range-grid').innerHTML=dateGrid(rangeCells(rangeMonth.year,rangeMonth.month,trips,today),today);
-    $('.ke-range-text').textContent=range.from?rangeLabel():'Select dates';
-    $('.ke-range-line').classList.toggle('is-set',Boolean(range.from));
-    $('.ke-schedule-head [data-clear-range]').hidden=!range.from;
-    $('[data-find-range]').hidden=!findMonth(null);
+  function renderCalendar() {
+    const today=dateKey(),scope=calendarTrips(placeId()),picked=new Set();
+    monthlyNav.sync();
+    scope.filter(t=>t.status==='available'&&pickedDay&&t.start<=pickedDay&&t.end>=pickedDay).forEach(t=>{for(let k=t.start;k<=t.end;k=shiftKey(k,{days:1}))picked.add(k);});
+    const cells=monthCells(rangeMonth.year,rangeMonth.month,scope,null,today).map(cell=>({...cell,past:cell.key<today}));
+    $('.ke-range-grid').innerHTML=dateGrid(cells,today,{from:null,to:null},picked);
+    const next=nextMonth(),find=$('.ke-range [data-find-month]');
+    find.hidden=!next;if(next)find.dataset.findMonth=`${next.year}-${next.month}`;
   }
-  function renderSchedule() {
-    const shown=view!=='world'&&activeRegion?regions.filter(region=>region.id===activeRegion):regions;
-    const {from,to}=period(),found=tripsInRange(trips,from,to),groups=shown.map(region=>({region,items:found.filter(t=>t.locations.some(id=>region.members.includes(id)))})).sort((a,b)=>Number(Boolean(b.items.length))-Number(Boolean(a.items.length)));
-    const total=new Set(groups.flatMap(group=>group.items)).size;
-    $('.ke-schedule-results h3').textContent=total?charterCount(total):noCharters;
-    $('.ke-schedule-bar-dates').textContent=periodLabel();
-    $('.ke-schedule-bar-count').textContent=total?charterCount(total):noCharters;
-    $('.ke-schedule-list').innerHTML=groups.map(({region,items})=>{
-      const rows=items.map(t=>{
-        const target=t.locations.find(id=>region.members.includes(id));
-        return `<button type="button" class="ke-srow" data-open-location="${escapeHTML(target)}">
-          <span class="ke-srow-top"><b>${escapeHTML(t.dates)}</b><span class="ke-srow-nights">${escapeHTML(t.nights)} nights</span></span>
-          <span class="ke-srow-route">${escapeHTML(t.route)}</span>
-          <span class="ke-status available ${t.type==='cabin'?'cabin':'private'}">${statusLabel(t)}</span></button>`;
-      }).join('');
-      return `<div class="ke-sgroup${items.length?'':' is-empty'}">
-        <button type="button" class="ke-sgroup-head" data-go-region="${escapeHTML(region.id)}">${region.image?`<img src="${safeUrl(/^https?:/.test(region.image)?region.image:new URL(`./assets/${region.image}`,KE_ASSET_BASE).href)}" alt="" loading="lazy">`:''}
-          <span class="ke-sgroup-name">${escapeHTML(region.name)}</span><span class="ke-sgroup-count">${items.length?charterCount(items.length):'No upcoming charters'}</span></button>
-        ${rows}</div>`;
-    }).join('');
+  // Always shown when there is somewhere to go (owner, 29 Oct): the next month after the one on screen with charters, wrapping to the first.
+  function nextMonth() {
+    const months=monthsFor(placeId()),current=monthIndex(rangeMonth);
+    const next=months.find(m=>monthIndex(m)>current)||months[0];
+    return next&&monthIndex(next)!==current?next:null;
+  }
+  // Route stops that are other map destinations become links to them; ports without a pin, and the destination
+  // already open, stay plain text. Padang is the departure port for every Mentawai sailing.
+  const placeAliases={padang:'mentawai'};
+  function routeMarkup(route,current) {
+    return route.split(/\s+-\s+/).map(place=>{
+      const key=place.trim().toLowerCase();
+      const target=locations.find(location=>location.name.toLowerCase()===key)?.id||(lookup[placeAliases[key]]?placeAliases[key]:null);
+      return target&&target!==current?`<button type="button" class="ke-route-link" data-go-location="${escapeHTML(target)}" aria-label="Show ${escapeHTML(lookup[target].name)} on the map">${escapeHTML(place)}</button>`:escapeHTML(place);
+    }).join(' - ');
+  }
+  const tripImage=t=>safeUrl(!options.trips&&t.asset?new URL(`./assets/${t.asset}`,KE_ASSET_BASE).href:t.img);
+  // One card everywhere (the September drawer card): overview cards also name their region, as a link to it.
+  function tripCard(t,id) {
+    const tripRegions=regions.filter(region=>t.locations.some(l=>region.members.includes(l)));
+    const where=id?'':`<p class="ke-trip-region">${tripRegions.map(region=>`<button type="button" class="ke-route-link" data-go-region="${escapeHTML(region.id)}">${escapeHTML(region.name)}</button>`).join(', ')}</p>`;
+    const match=pickedDay&&t.start<=pickedDay&&t.end>=pickedDay;
+    const destinationName=id?lookup[id].name:tripRegions[0]?.name||'Indonesia';
+    return `<article class="ke-trip${match?' is-match':''}">
+        <img src="${tripImage(t)}" alt="${escapeHTML(t.route)} expedition" loading="lazy">
+        <div class="ke-trip-main"><div class="ke-trip-heading"><div class="ke-trip-top"><h4>${escapeHTML(t.dates)}</h4><span class="ke-nights">${escapeHTML(t.nights)} nights</span></div><div class="ke-trip-tags"><span class="ke-status available ${t.type==='cabin'?'cabin':'private'}">${t.type==='cabin'?'Cabin booking':'Private charter'}</span></div></div>
+        <p class="ke-trip-route">${routeMarkup(t.route,id)}</p>${where}<p class="ke-activity">${escapeHTML(t.activity)}</p>
+        <a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{trip:t,destinationName,range:range.from?rangeLabel():null}))}" target="_blank" rel="noopener">Book this charter</a></div></article>`;
+  }
+  const planLink=(name,when)=>`<a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{destinationName:name,range:when}))}" target="_blank" rel="noopener">Plan a private charter</a>`;
+  // Never a dead end: say what is missing, then offer the next step.
+  function emptyMarkup(id,monthly) {
+    const name=id?lookup[id].name:'Indonesia';
+    if(monthly){
+      const next=nextMonth();
+      return `<h3>No charters in ${monthName(rangeMonth)}</h3><div class="ke-menu-actions">${next?`<button type="button" class="ke-btn" data-find-month="${next.year}-${next.month}">Show ${monthName(next)}</button>`:''}${planLink(name,range.from?rangeLabel():monthName(rangeMonth))}</div>`;
+    }
+    if(range.from)return `<p class="ke-empty">No charters${id?` to ${escapeHTML(name)}`:''} on these dates.</p><div class="ke-menu-actions"><button type="button" class="ke-btn" data-clear-range>Clear dates</button>${planLink(name,rangeLabel())}</div>`;
+    const region=id&&regionOf(id),nearby=region&&region.id!==id?listFor(region.id).slice(0,2):[];
+    return `<p class="ke-empty">${id?`No charters to ${escapeHTML(name)} are planned yet. We can plan a private one for you.`:'No upcoming charters are planned yet. We can plan a private one for you.'}</p>
+      <div class="ke-menu-actions">${planLink(name,null)}</div>${nearby.length?`<h3>Nearby in ${escapeHTML(region.name)}</h3>${nearby.map(t=>tripCard(t,null)).join('')}`:''}`;
+  }
+  function renderMenu() {
+    const id=placeId(),name=id?lookup[id].name:'Schedule',monthly=charterView==='month',all=listFor(id,false),shown=listFor(id);
+    $('.ke-schedule h2').textContent=name;$('.ke-schedule-bar-title').textContent=name;
+    $('.ke-schedule-bar-count').textContent=all.length?charterCount(all.length):'No charters';
+    const datesNote=`<span>${charterCount(all.length)}, ${escapeHTML(rangeLabel())}</span><button type="button" class="ke-clear-range" data-clear-range>Clear dates</button>`;
+    const line=$('.ke-menu-line');line.classList.toggle('is-count',!id&&!range.from);
+    const anchor=id&&regionOf(id)?.anchor;
+    line.innerHTML=id?`<button type="button" class="ke-back" data-menu-back>${backGlyph}All destinations</button><a class="ke-discover" href="https://www.kudanil.com/bespoke-expeditions${anchor?'#'+anchor:''}" target="_blank" rel="noopener">About ${escapeHTML(name)}</a>`
+      :range.from?datesNote:`<span>${all.length?`${all.length} upcoming ${all.length===1?'charter':'charters'}`:'No upcoming charters'}</span>`;
+    $('.ke-range').hidden=!monthly;syncView();if(monthly)renderCalendar();
+    let html=id&&range.from?`<p class="ke-dates-line">${datesNote}</p>`:'';
+    if(!shown.length)html+=emptyMarkup(id,monthly);
+    else if(monthly)html+=`<h3>Charters in ${monthName(rangeMonth)}</h3>${shown.map(t=>tripCard(t,id)).join('')}`;
+    else if(!id){let last='';html+=shown.map(t=>{const m=monthName({year:+t.start.slice(0,4),month:+t.start.slice(5,7)-1}),head=m!==last?`<h3 class="ke-month-h">${m}</h3>`:'';last=m;return head+tripCard(t,null);}).join('');}
+    else html+=shown.map(t=>tripCard(t,id)).join('');
+    $('.ke-schedule-list').innerHTML=html;
   }
   function placeBoat() {
-    const from=period().from,today=dateKey(),day=from<today?today:from,at=boatPosition(voyages,places,day,seaway);
+    // The boat shows today, the chosen departure, or (browsing by month) the first of the month on screen.
+    const today=dateKey(),from=range.from||(charterView==='month'?`${rangeMonth.year}-${String(rangeMonth.month+1).padStart(2,'0')}-01`:today),day=from<today?today:from,at=boatPosition(voyages,places,day,seaway);
     boat.hidden=!at;if(!at)return;
     boatShown={x:at.x,y:at.y};
     if(at.heading)boat.dataset.heading=at.heading>0?'east':'west';
@@ -847,32 +849,26 @@ async function mountCharterMap(root,options={}) {
     boat.setAttribute('aria-label',boat.dataset.label);
     planBoat();
   }
-  function refreshCalendar() {
-    renderRange();syncQuickTrigger();
-    if(activeLocation)renderCalendar();
-    paintAvailability();renderSchedule();placeBoat();
+  function refreshMenu() {
+    syncQuickTrigger();paintAvailability();renderMenu();placeBoat();
     draw();placeLabels();schedule();
   }
-  function setRange(from,to=null,announce=true,showMonth=true) {
-    range={from,to};rangeChosen=true;
-    if(from&&showMonth)rangeMonth={year:Number(from.slice(0,4)),month:Number(from.slice(5,7))-1};
-    refreshCalendar();
-    if(announce)status.textContent=`${$('.ke-schedule-results h3').textContent}, ${periodLabel()}`;
-  }
-  function pickDay(key) {
-    if(!range.from||range.to||key<range.from)setRange(key,null,true,false);
-    else setRange(range.from,key,true,false);
+  function setRange(from,to=null,announce=true) {
+    range={from,to};pickedDay=null;
+    if(from)rangeMonth={year:Number(from.slice(0,4)),month:Number(from.slice(5,7))-1};
+    refreshMenu();
+    if(announce)status.textContent=from?`${charterCount(listFor(placeId(),false).length)}, ${rangeLabel()}`:'Dates cleared';
   }
   function browseMonth(value) {
-    rangeMonth=clampMonth(value,monthRange(trips,null));
-    refreshCalendar();
+    rangeMonth=clampMonth(value,monthRange(trips,null));pickedDay=null;
+    refreshMenu();
   }
   function setSheet(open) {
     root.dataset.schedule=open?'open':'closed';$('.ke-schedule-bar').setAttribute('aria-expanded',String(open));
     const content=$('.ke-schedule-scroll'),hidden=stage.clientWidth<=767&&!open;
     if(hidden){
-      rangeNav.close();
-      if(content.contains(document.activeElement)&&view!=='location')$('.ke-schedule-bar').focus({preventScroll:true});
+      closePickers();
+      if(content.contains(document.activeElement))$('.ke-schedule-bar').focus({preventScroll:true});
     }
     content.inert=hidden;
   }
@@ -887,39 +883,40 @@ async function mountCharterMap(root,options={}) {
     regionToggle.setAttribute('aria-expanded','false');regionMenu.inert=true;regionMenu.classList.remove('is-open');
     if(restoreFocus)regionToggle.focus({preventScroll:true});
   }
-  function hideDrawer(){closePickers();closeSelects();drawer.classList.remove('is-open');drawer.inert=true;activeLocation=null;}
+  // A new place starts the menu at its top, with no tapped day.
+  function resetPlace(){closePickers();pickedDay=null;$('.ke-schedule-scroll').scrollTop=0;}
+  // Opening a destination needs the menu: bring it back if it was hidden (desktop) or closed (phone sheet).
+  function showMenu() {
+    if(stage.clientWidth<=767){setSheet(true);return;}
+    if(root.dataset.sidebar!=='collapsed')return;
+    root.dataset.sidebar='open';$('.ke-collapse').setAttribute('aria-expanded','true');$('.ke-expand').hidden=true;$('.ke-quick').hidden=true;closeQuick();menu.inert=false;
+  }
   function enterRegion(id) {
     closeRegionMenu();
     // A single-destination region (Mentawai Islands) has nothing to choose between: open it directly.
     if(lookup[id].members.length===1)return openLocation(lookup[id].members[0]);
-    root.dataset.moving='true';hideDrawer();view='region';activeRegion=id;pointer={x:0,y:0};drift={x:0,y:0};
+    root.dataset.moving='true';resetPlace();activeLocation=null;view='region';activeRegion=id;pointer={x:0,y:0};drift={x:0,y:0};
+    if(charterView==='month'&&fitMonth()){paintAvailability();placeBoat();}
     updateChrome();const to=regionCamera(id);regionRestScale=to.scale;const from={...camera};camera=to;draw();updateMarkers();camera=from;draw();fly(to,1650);
     $('[data-action=world]').focus({preventScroll:true});
   }
   function exitWorld() {
-    root.dataset.moving='true';const previous=activeRegion;hideDrawer();view='world';activeRegion=null;updateChrome();const to=worldCamera();updateMarkers();fly(to,1300);
+    root.dataset.moving='true';const previous=activeRegion;resetPlace();activeLocation=null;view='world';activeRegion=null;
+    if(charterView==='month'&&fitMonth()){paintAvailability();placeBoat();}
+    updateChrome();const to=worldCamera();updateMarkers();fly(to,1300);
     hideDestinationMarkers();
     markers.find(m=>m.point.id===previous)?.button.focus({preventScroll:true});
   }
-  function renderCalendar() {
-    const monthly=charterView==='month',today=dateKey();
-    $('.ke-calendar').hidden=!monthly;syncView();
-    monthlyNav.sync();
-    const cells=monthCells(rangeMonth.year,rangeMonth.month,trips,activeLocation,today).map(cell=>({...cell,past:cell.key<today}));
-    $('.ke-calendar-grid').innerHTML=dateGrid(cells,today);
-    $('[data-find-dates]').hidden=!findMonth(activeLocation);
-    renderTrips(activeLocation);
-  }
   // Month/year picker: overlays the day grid in the same footprint, so the panel never jumps.
-  // `scope` is the destination whose availability the month dots show; null means every destination.
   const pickers=[];
   const closePickers=()=>pickers.forEach(nav=>nav.close());
-  function monthNav(section,{scope,get,set}) {
+  function monthNav(section,{get,set}) {
     const q=selector=>section.querySelector(selector),period=q('.ke-period'),panel=q('.ke-picker'),yearSelect=q('.ke-picker-year-label');
     let year=null;
     const isOpen=()=>period.getAttribute('aria-expanded')==='true';
     function render() {
-      const bounds=monthRange(trips,null),available=monthAvailability(trips,scope(),year),now=new Date(),current=get();
+      // Month dots follow the place the menu shows.
+      const bounds=monthRange(trips,null),available=monthAvailability(calendarTrips(placeId()),null,year),now=new Date(),current=get();
       yearSelect.innerHTML=Array.from({length:bounds.max.year-bounds.min.year+1},(_,i)=>`<option value="${bounds.min.year+i}">${bounds.min.year+i}</option>`).join('');
       yearSelect.value=String(year);
       q('[data-year="-1"]').disabled=year<=bounds.min.year;
@@ -939,7 +936,7 @@ async function mountCharterMap(root,options={}) {
       if(isOpen())render();
     }
     function open() {
-      closeRegionMenu();closeSelects();closePickers();
+      closeRegionMenu();closePickers();
       year=get().year;render();
       period.setAttribute('aria-expanded','true');panel.inert=false;panel.classList.add('is-open');
       (q('.ke-picker-month.is-selected')||q('.ke-picker-month:not(:disabled)'))?.focus({preventScroll:true});
@@ -973,84 +970,17 @@ async function mountCharterMap(root,options={}) {
     const nav={sync,close,isOpen,period,owns:element=>panel.contains(element)||period.contains(element)};
     pickers.push(nav);return nav;
   }
-  const rangeNav=monthNav($('.ke-range'),{scope:()=>null,get:()=>rangeMonth,set:browseMonth});
-  const monthlyNav=monthNav($('.ke-calendar'),{scope:()=>activeLocation,get:()=>rangeMonth,set:browseMonth});
-  // Charter list filters. Month and year match a trip's start date, as on the live schedule page.
-  let filters={type:'',month:'',year:''};
-  const selects=[...root.querySelectorAll('.ke-select')];
-  function setFilter(select,value,announce=true) {
-    const key=select.dataset.filter,option=select.querySelector(`[data-value="${value}"]`)||select.querySelector('[data-value=""]');
-    filters[key]=option.dataset.value;
-    select.querySelectorAll('.ke-select-opt').forEach(item=>item.setAttribute('aria-selected',String(item===option)));
-    const label=select.querySelector('.ke-select-toggle').getAttribute('aria-label').split(':')[0];
-    select.querySelector('.ke-select-value').textContent=option.dataset.value?option.textContent:label;
-    select.querySelector('.ke-select-toggle').setAttribute('aria-label',`${label}: ${option.textContent}`);
-    select.classList.toggle('is-filled',Boolean(option.dataset.value));
-    if(announce&&activeLocation)renderTrips(activeLocation);
-  }
-  function openSelect(select) {
-    closeSelects();closePickers();closeRegionMenu();
-    select.classList.add('is-open');select.querySelector('.ke-select-opts').inert=false;
-    select.querySelector('.ke-select-toggle').setAttribute('aria-expanded','true');
-    (select.querySelector('[aria-selected=true]')||select.querySelector('.ke-select-opt')).focus({preventScroll:true});
-  }
-  function closeSelects(except=null,restoreFocus=false) {
-    selects.filter(select=>select!==except&&select.classList.contains('is-open')).forEach(select=>{
-      select.classList.remove('is-open');select.querySelector('.ke-select-opts').inert=true;
-      const toggle=select.querySelector('.ke-select-toggle');toggle.setAttribute('aria-expanded','false');
-      if(restoreFocus)toggle.focus({preventScroll:true});
-    });
-  }
-  function resetFilters(){selects.forEach(select=>setFilter(select,'',false));closeSelects();}
-  // Route stops that are other map destinations become links to them; ports without a pin, and the destination
-  // already open, stay plain text. Padang is the departure port for every Mentawai sailing.
-  const placeAliases={padang:'mentawai'};
-  function routeMarkup(route,current) {
-    return route.split(/\s+-\s+/).map(place=>{
-      const key=place.trim().toLowerCase();
-      const target=locations.find(location=>location.name.toLowerCase()===key)?.id||(lookup[placeAliases[key]]?placeAliases[key]:null);
-      return target&&target!==current?`<button type="button" class="ke-route-link" data-go-location="${escapeHTML(target)}" aria-label="Show ${escapeHTML(lookup[target].name)} on the map">${escapeHTML(place)}</button>`:escapeHTML(place);
-    }).join(' - ');
-  }
-  function renderTrips(id) {
-    const all=tripsAt(trips,id),upcoming=all.filter(t=>t.end>=dateKey());
-    const available=upcoming.filter(trip=>trip.status==='available'),monthly=charterView==='month';
-    const dated=Boolean(range.from),selected=monthly?period():{from:range.from,to:rangeEnd()};
-    const base=(monthly?upcoming:available).filter(t=>overlapsRange(t,selected.from,selected.to));
-    const visible=base.filter(t=>(!filters.type||t.type===filters.type)&&(monthly||((!filters.month||Number(t.start.slice(5,7))-1===Number(filters.month))&&(!filters.year||t.start.slice(0,4)===filters.year))));
-    const filtered=Boolean(filters.type||(!monthly&&(filters.month||filters.year)));
-    const periodName=new Intl.DateTimeFormat('en',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(Date.UTC(rangeMonth.year,rangeMonth.month,1)));
-    const anchor=regionOf(id)?.anchor;
-    $('.ke-discover').href=`https://www.kudanil.com/bespoke-expeditions${anchor?'#'+anchor:''}`;
-    $('.ke-trips-head h3').textContent=dated?`Charters ${rangeLabel()}`:monthly?`Charters in ${periodName}`:'Available charters';
-    // The calendar already sets the month in monthly view, so only the charter type filter stays.
-    $('.ke-filters').dataset.mode=monthly?'month':'all';
-    // Nothing to narrow down: no filter row (kept while a filter is on, so it can be undone).
-    $('.ke-filters').hidden=!upcoming.length||(!visible.length&&!filtered);
-    $('.ke-trip-list').innerHTML=(visible.length?visible.map(t=>{
-      // Private (whole-yacht) charters and shared cabin trips are told apart by the availability label alone.
-      const status=t.status==='available'?(t.type==='cabin'?'Available For Cabin Booking':'Available For Private Charter'):t.status==='tentative'?'Tentative':'Booked';
-      return `<article class="ke-trip">
-        <img src="${safeUrl(!options.trips&&t.asset?new URL(`./assets/${t.asset}`,KE_ASSET_BASE).href:t.img)}" alt="${escapeHTML(t.route)} expedition" loading="lazy">
-        <div class="ke-trip-main"><div class="ke-trip-heading"><div class="ke-trip-top"><h4>${escapeHTML(t.dates)}</h4><span class="ke-nights">${escapeHTML(t.nights)} nights</span></div><div class="ke-trip-tags"><span class="ke-status ${escapeHTML(t.status)}${t.status==='available'?(t.type==='cabin'?' cabin':' private'):''}">${status}</span></div></div>
-        <p class="ke-trip-route">${routeMarkup(t.route,id)}</p><p class="ke-activity">${escapeHTML(t.stops)}</p><p class="ke-activity">${escapeHTML(t.activity)}</p>
-        <a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{trip:t,destinationName:lookup[id].name,range:rangeChosen&&range.from?rangeLabel():null}))}" target="_blank" rel="noopener">${t.status==='available'?'Book this charter':'Enquire about this charter'}</a></div></article>`;
-    }).join(''):filtered&&base.length?`<p class="ke-empty">No charters match these filters.</p>
-      <button type="button" class="ke-clear-filters" data-clear-filters>Clear filters</button>`:`<p class="ke-empty">${noCharters}.</p>
-      ${nearMarkup(nearestTrips(available,selected.from,selected.to))}
-      <a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{destinationName:lookup[id].name,range:rangeChosen&&range.from?rangeLabel():monthly?periodName:null}))}" target="_blank" rel="noopener">Plan a private charter</a>`);
-    status.textContent=visible.length?`${charterCount(visible.length)}${dated?` for ${rangeLabel()}`:monthly?` in ${periodName}`:' available'}`:noCharters;
-  }
-
+  const monthlyNav=monthNav($('.ke-range'),{get:()=>rangeMonth,set:browseMonth});
   function openLocation(id) {
-    root.dataset.moving='true';closePickers();closeRegionMenu();charterView='month';const targetRegion=regionOf(id)?.id||activeRegion,sameRegion=targetRegion===activeRegion&&view!=='world';if(!sameRegion)regionRestScale=regionCamera(targetRegion).scale;activeRegion=targetRegion;activeLocation=id;view='location';pointer={x:0,y:0};drift={x:0,y:0};
-    $('.ke-drawer h2').textContent=lookup[id].name;resetFilters();renderCalendar();
-    $('.ke-drawer-scroll').scrollTop=0;drawer.inert=false;drawer.classList.add('is-open');
-    updateChrome();const to=locationCamera(sameRegion);const from={...camera};camera=to;draw();updateMarkers();camera=from;draw();fly(to,1500);$('.ke-close').focus({preventScroll:true});
+    root.dataset.moving='true';closeRegionMenu();resetPlace();const targetRegion=regionOf(id)?.id||activeRegion,sameRegion=targetRegion===activeRegion&&view!=='world';if(!sameRegion)regionRestScale=regionCamera(targetRegion).scale;activeRegion=targetRegion;activeLocation=id;view='location';pointer={x:0,y:0};drift={x:0,y:0};
+    showMenu();if(charterView==='month'&&fitMonth()){paintAvailability();placeBoat();}
+    updateChrome();const to=locationCamera(sameRegion);const from={...camera};camera=to;draw();updateMarkers();camera=from;draw();fly(to,1500);$('[data-menu-back]')?.focus({preventScroll:true});
   }
   function closeLocation() {
     if(lookup[activeRegion].members.length===1)return exitWorld();
-    root.dataset.moving='true';const previous=activeLocation;hideDrawer();view='region';updateChrome();const to=regionCamera(activeRegion);const from={...camera};camera=to;draw();updateMarkers();camera=from;draw();fly(to,1150);
+    root.dataset.moving='true';const previous=activeLocation;resetPlace();activeLocation=null;view='region';
+    if(charterView==='month'&&fitMonth()){paintAvailability();placeBoat();}
+    updateChrome();const to=regionCamera(activeRegion);const from={...camera};camera=to;draw();updateMarkers();camera=from;draw();fly(to,1150);
     markers.find(m=>m.point.id===previous)?.button.focus({preventScroll:true});
   }
   on($('[data-action=world]'),'click',exitWorld);
@@ -1070,81 +1000,41 @@ async function mountCharterMap(root,options={}) {
   // Capture phase: map pins stop click propagation, and choosing a pin must still dismiss the menu.
   on(root,'click',event=>{if(!event.target.closest('.ke-region-menu'))closeRegionMenu();pickers.forEach(nav=>{if(!nav.owns(event.target))nav.close();});},{capture:true});
   root.querySelectorAll('.ke-region-list [data-region]').forEach(button=>on(button,'click',()=>enterRegion(button.dataset.region)));
-  on($('.ke-close'),'click',closeLocation);
   root.querySelectorAll('[data-destination]').forEach(button=>on(button,'click',()=>{
     if(!activeLocation)return;const index=locations.findIndex(location=>location.id===activeLocation),step=button.dataset.destination==='next'?1:-1;
     openLocation(locations[(index+step+locations.length)%locations.length].id);
   }));
-  on($('[data-find-dates]'),'click',()=>{
-    const next=findMonth(activeLocation);if(!next)return;
-    range={from:null,to:null};closePickers();browseMonth(next);monthlyNav.period.focus({preventScroll:true});
-  });
-  on($('[data-find-range]'),'click',()=>{
-    const next=findMonth(null);if(!next)return;
-    range={from:null,to:null};closePickers();browseMonth(next);rangeNav.period.focus({preventScroll:true});
+  // One handler for the menu's links: back, route stops, region names, next month, clear dates.
+  on(menu,'click',event=>{
+    const el=event.target.closest('[data-menu-back],[data-go-location],[data-go-region],[data-find-month],[data-clear-range]');if(!el)return;
+    if('menuBack' in el.dataset)return exitWorld();
+    if(el.dataset.goLocation){if(el.dataset.goLocation!==activeLocation)openLocation(el.dataset.goLocation);return;}
+    if(el.dataset.goRegion){if(!(view==='region'&&activeRegion===el.dataset.goRegion))enterRegion(el.dataset.goRegion);return;}
+    if(el.dataset.findMonth){const [year,month]=el.dataset.findMonth.split('-').map(Number);closePickers();browseMonth({year,month});monthlyNav.period.focus({preventScroll:true});return;}
+    if('clearRange' in el.dataset)setRange(null);
   });
   root.querySelectorAll('[data-charter-view]').forEach(button=>on(button,'click',()=>{
-    charterView=button.dataset.charterView;closePickers();syncView();if(activeLocation)renderCalendar();
+    if(charterView===button.dataset.charterView)return;
+    charterView=button.dataset.charterView;pickedDay=null;closePickers();if(charterView==='month')fitMonth();refreshMenu();
   }));
-  on(drawer,'click',event=>{if(!event.target.closest('.ke-select'))closeSelects();});
-  selects.forEach(select=>{
-    const toggle=select.querySelector('.ke-select-toggle'),options=[...select.querySelectorAll('.ke-select-opt')];
-    on(toggle,'click',()=>select.classList.contains('is-open')?closeSelects(null,true):openSelect(select));
-    options.forEach(option=>on(option,'click',()=>{setFilter(select,option.dataset.value);closeSelects(null,true);}));
-    on(select.querySelector('.ke-select-opts'),'keydown',event=>{
-      const index=options.indexOf(document.activeElement);
-      const target={ArrowDown:index+1,ArrowUp:index-1,Home:0,End:options.length-1}[event.key];
-      if(target===undefined)return;event.preventDefault();
-      options[Math.max(0,Math.min(options.length-1,target))].focus({preventScroll:true});
-    });
-    on(select,'focusout',event=>{if(!select.contains(event.relatedTarget))closeSelects();});
+  // Tapping a green day lights up the charter(s) sailing that day; tapping it again lets go.
+  on($('.ke-range-grid'),'click',event=>{
+    const day=event.target.closest('[data-day]');if(!day)return;
+    const key=day.dataset.day;pickedDay=pickedDay===key?null:key;renderMenu();
+    $('.ke-range-grid').querySelector(`[data-day="${key}"]`)?.focus({preventScroll:true});
+    menu.querySelector('.ke-trip.is-match')?.scrollIntoView({block:'nearest',behavior:reduced.matches?'auto':'smooth'});
   });
-  on($('.ke-trip-list'),'click',event=>{
-    if(event.target.closest('[data-clear-filters]')){resetFilters();renderTrips(activeLocation);$('.ke-select-toggle').focus({preventScroll:true});return;}
-    const go=event.target.closest('[data-go-location]');
-    if(go&&go.dataset.goLocation!==activeLocation)openLocation(go.dataset.goLocation);
-  });
-  // Schedule sidebar and the drawer's "nearest dates" share these delegated actions.
-  on(root,'click',event=>{
-    const set=event.target.closest('[data-set-range]'),clear=event.target.closest('[data-clear-range]');
-    if(set){const [from,to]=set.dataset.setRange.split('|');setRange(from,to);}
-    else if(clear)setRange(null);
-  });
-  root.querySelectorAll('.ke-range-grid,.ke-calendar-grid').forEach(grid=>{
-    on(grid,'click',event=>{
-      const day=event.target.closest('[data-day]');if(!day||day.disabled)return;
-      const key=day.dataset.day;pickDay(key);grid.querySelector(`[data-day="${key}"]`)?.focus({preventScroll:true});
-    });
+  // Quick dates: while a departure is picked, hovering a later day previews the stay.
+  root.querySelectorAll('.ke-quick-grid').forEach(grid=>{
     on(grid,'pointerover',event=>{
-      const day=event.target.closest('[data-day]'),to=range.from&&!range.to&&day&&!day.disabled&&day.dataset.day>range.from?day.dataset.day:null;
-      grid.querySelectorAll('[data-day]').forEach(cell=>{
+      const day=event.target.closest('[data-day]'),to=draft.from&&!draft.to&&day&&!day.disabled&&day.dataset.day>draft.from?day.dataset.day:null;
+      root.querySelectorAll('.ke-quick-grid [data-day]').forEach(cell=>{
         const key=cell.dataset.day;
-        cell.classList.toggle('is-preview',Boolean(to&&key>range.from&&key<to));
+        cell.classList.toggle('is-preview',Boolean(to&&key>draft.from&&key<to));
         cell.classList.toggle('is-preview-end',key===to);
-        if(key===range.from&&!range.to)cell.classList.toggle('has-band',Boolean(to));
       });
     });
-    on(grid,'pointerleave',()=>{
-      grid.querySelectorAll('.is-preview,.is-preview-end').forEach(cell=>cell.classList.remove('is-preview','is-preview-end'));
-      if(!range.to)grid.querySelector('.has-band')?.classList.remove('has-band');
-    });
-    on(grid,'keydown',event=>{
-      const day=event.target.closest('[data-day]');if(!day)return;
-      const key=day.dataset.day,date=new Date(`${key}T00:00:00Z`),weekday=date.getUTCDay();
-      const step={ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7,Home:-weekday,End:6-weekday}[event.key];
-      if(step===undefined)return;event.preventDefault();date.setUTCDate(date.getUTCDate()+step);
-      const next=date.toISOString().slice(0,10);if(next<dateKey())return;
-      const value={year:date.getUTCFullYear(),month:date.getUTCMonth()},bounds=monthRange(trips,null);
-      if(monthIndex(value)<monthIndex(bounds.min)||monthIndex(value)>monthIndex(bounds.max))return;
-      if(monthIndex(value)!==monthIndex(rangeMonth))browseMonth(value);
-      grid.querySelector(`[data-day="${next}"]`)?.focus({preventScroll:true});
-    });
-  });
-  on($('.ke-schedule-list'),'click',event=>{
-    const region=event.target.closest('[data-go-region]'),open=event.target.closest('[data-open-location]');
-    if(region||open)setSheet(false);
-    if(open)openLocation(open.dataset.openLocation);
-    else if(region&&!(view==='region'&&activeRegion===region.dataset.goRegion))enterRegion(region.dataset.goRegion);
+    on(grid,'pointerleave',()=>root.querySelectorAll('.ke-quick-grid .is-preview,.ke-quick-grid .is-preview-end').forEach(cell=>cell.classList.remove('is-preview','is-preview-end')));
   });
   on($('.ke-schedule-bar'),'click',()=>setSheet(root.dataset.schedule!=='open'));
   // Quick dates (collapsed sidebar): presets plus two months, edited as a draft and applied in one go, like Meta Business Suite.
@@ -1165,7 +1055,7 @@ async function mountCharterMap(root,options={}) {
     root.querySelectorAll('.ke-quick-month').forEach((box,i)=>{
       const at=plusMonth(quickMonth,i);
       box.querySelector('b').textContent=`${MONTHS_LONG[at.month]} ${at.year}`;
-      box.querySelector('.ke-quick-grid').innerHTML=dateGrid(rangeCells(at.year,at.month,trips,today),today,draft);
+      box.querySelector('.ke-quick-grid').innerHTML=dateGrid(rangeCells(at.year,at.month,notSailed(trips,today),today),today,draft);
     });
     root.querySelectorAll('[data-quick-field]').forEach(field=>{const key=draft[field.dataset.quickField];
       field.textContent=key?longDate(key):field.dataset.quickField==='from'?'Departure':'Return';field.classList.toggle('is-empty',!key);});
@@ -1209,7 +1099,7 @@ async function mountCharterMap(root,options={}) {
   // Desktop: collapse the sidebar to a tab and give the map the full width; the camera reframes to match.
   function setSidebar(open,focus=true) {
     root.dataset.sidebar=open?'open':'collapsed';
-    $('.ke-collapse').setAttribute('aria-expanded',String(open));$('.ke-expand').hidden=open;$('.ke-quick').hidden=open;if(open)closeQuick();else syncQuickTrigger();$('.ke-schedule').inert=!open||view==='location';
+    $('.ke-collapse').setAttribute('aria-expanded',String(open));$('.ke-expand').hidden=open;$('.ke-quick').hidden=open;if(open)closeQuick();else syncQuickTrigger();menu.inert=!open;
     if(view==='world')fly(worldCamera(),900);
     else if(view==='region'){const to=regionCamera(activeRegion);regionRestScale=to.scale;fly(to,900);}
     setTimeout(placeLabels,950);
@@ -1220,7 +1110,6 @@ async function mountCharterMap(root,options={}) {
     if(event.key!=='Escape')return;
     if(!quickPop.hidden){closeQuick(true);return;}
     if(regionToggle.getAttribute('aria-expanded')==='true'){closeRegionMenu(true);return;}
-    if(selects.some(select=>select.classList.contains('is-open'))){closeSelects(null,true);return;}
     const picking=pickers.find(nav=>nav.isOpen());if(picking){picking.close(true);return;}
     if(root.dataset.schedule==='open'){setSheet(false);$('.ke-schedule-bar').focus({preventScroll:true});return;}
     if(view==='location')closeLocation();else if(view==='region')exitWorld();
@@ -1240,7 +1129,7 @@ async function mountCharterMap(root,options={}) {
   const observer=new ResizeObserver(()=>{
     syncHeaderInset();
     // Phones have no collapsed state; the bottom sheet replaces it.
-    if(stage.clientWidth<=767&&root.dataset.sidebar==='collapsed'){root.dataset.sidebar='open';$('.ke-expand').hidden=true;$('.ke-quick').hidden=true;closeQuick();$('.ke-collapse').setAttribute('aria-expanded','true');$('.ke-schedule').inert=view==='location';}
+    if(stage.clientWidth<=767&&root.dataset.sidebar==='collapsed'){root.dataset.sidebar='open';$('.ke-expand').hidden=true;$('.ke-quick').hidden=true;closeQuick();$('.ke-collapse').setAttribute('aria-expanded','true');menu.inert=false;}
     setSheet(root.dataset.schedule==='open');
     if(!markers.length)return;
     flight=null;root.dataset.moving='false';map.setAttribute('viewBox',`0 0 ${stage.clientWidth} ${stage.clientHeight}`);
@@ -1251,7 +1140,7 @@ async function mountCharterMap(root,options={}) {
   });observer.observe(stage);
   const siteHeader=document.querySelector(options.headerSelector||'.header');if(siteHeader)observer.observe(siteHeader);
   const api={destroy(){disposed=true;abort.abort();observer.disconnect();cancelAnimationFrame(frame);markers.forEach(marker=>clearTimeout(marker.exitTimer));root.getAnimations({subtree:true}).forEach(a=>a.cancel());delete root.keMap;},
-    getState:()=>({view,activeRegion,activeLocation,range:{...range},month:{...rangeMonth},period:{...period()},camera:{...camera},viewport:viewport(view==='location')}),enterRegion,openLocation,exitWorld,setRange};
+    getState:()=>({view,activeRegion,activeLocation,range:{...range},month:{...rangeMonth},mode:charterView,camera:{...camera},viewport:viewport(view==='location')}),enterRegion,openLocation,exitWorld,setRange};
   root.keMap=api;
   // Focus rings only for keyboard users: focus moved by script after a click (e.g. to "All regions") stays unringed.
   on(document,'keydown',event=>{if(event.key==='Tab'||root.contains(event.target))root.dataset.input='key';},{capture:true});
@@ -1268,7 +1157,7 @@ async function mountCharterMap(root,options={}) {
     if(disposed)return api;
     map.setAttribute('viewBox',`0 0 ${stage.clientWidth} ${stage.clientHeight}`);
     regions.forEach(p=>addMarker(p,true));locations.forEach(p=>addMarker(p,false));
-    root.dataset.sidebar='open';setSheet(false);renderRange();paintAvailability();placeBoat();
+    root.dataset.sidebar='open';setSheet(false);fitMonth();$('[data-holds]').hidden=!notSailed(trips).some(t=>t.status==='tentative');paintAvailability();placeBoat();
     syncHeaderInset();camera=worldCamera();draw();updateMarkers();updateChrome();
     if(!reduced.matches){
       reveal(intro,120);reveal(map,150);markers.filter(m=>m.isRegion).forEach((m,i)=>reveal(m.anchor,300+i*100));
