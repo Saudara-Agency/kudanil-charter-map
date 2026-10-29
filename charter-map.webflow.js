@@ -380,8 +380,8 @@ const chevron='<svg class="ke-chevron" viewBox="0 0 12 8" aria-hidden="true"><pa
 const boatMarkup=`<svg class="ke-boat-hull" viewBox="0 0 445.06 201.96" fill="currentColor" aria-hidden="true"><path d="M220.27,201.89q-93.54,0-187.08.07c-3.2,0-5.79-.68-8-3.4a37.46,37.46,0,0,0-4.1-3.54,2.45,2.45,0,0,0-1.88-.46c-5.74,0-11.47,0-17.2.07-1.55,0-2-.55-2-2.29.11-2.29.1-4.59,0-6.88,0-1.4.44-1.76,1.55-1.73,2.64.06,5.29-.06,7.94.05,1.27.06,1.61-.47,1.56-1.84h0c-.12-.84,1.07-6.94,3.79-19.17,48.51-1,87.21-1.07,114.27-.93,13.11.07,41.4.12,98,.23,14.83,0,25.3,0,39.82-.34,17.28-.47,39.29-1.47,54-2.14l8-.37c6.43-.31,10.12-.51,29.34-1.41,12.28-.58,24.57-1.12,36.85-1.7l35.69-1.73c1.6-.08,3.19-.08,4.79-.15,1.42-.06,1.5.58.83,1.82q-4.17,7.68-8.31,15.4c-4.89,9.17-9.81,18.33-14.61,27.58-1.07,2.06-2.18,2.94-4.39,2.93Q314.72,201.84,220.27,201.89Z"/><path d="M367.6,104.45c1-.19,1.19.18.88,1.26-1.21,4.25-2.34,8.52-3.57,12.75a3,3,0,0,0,.08,2.33c.81,1.67,1.56,3.37,2.32,5.06,1.11,2.46.92,2.86-1.43,2.87q-14.55,0-29.11.05l-261.68,0c-1.93,0-3.86,0-5.79,0-1.21,0-1.56-.48-1.21-1.86.87-3.44,2.34-6.65,2.94-10.21.18-1,1.14-1,1.93-1h25.8q64.59,0,129.19,0c2.43,0,4.29,1.85,6.35,3a9.43,9.43,0,0,0,4.58,1.19c17.48,0,35-.41,52.43-.06,2.14,0,2.13,0,2.13-2.48,0-2.93,0-5.86,0-8.79,0-1.12-.24-1.57-1.29-1.56q-19,0-38,0c-1.08,0-1.3.51-1.28,1.6,0,2.16,0,4.33,0,6.49,0,1-.28,1.47-1.24,1.46-4.68,0-9.37,0-14.06,0a3.18,3.18,0,0,1-1.82-.78c-3.89-2.64-7.78-5.28-11.66-8a4.7,4.7,0,0,0-2.81-.85q-69.56,0-139.11,0c-2.39,0-2.39,0-2.37-2.67v-.57c0-4.69,0-4.67,4.09-5.11,8.88-1,17.75-2,26.63-3q24.67-2.75,49.34-5.53c1.55-.18,2.07.27,2,2.11-.13,4-.06,4,3.53,4q55.58,0,111.15,0a3.45,3.45,0,0,0,3.19-1.77c.8-1.21,1.8-2.25,2.65-3.41s1.85-.54,2.79-.58c3-.13,2.65.52,2.65-3,0-14.27,0-28.54.06-42.8,0-1.61-.4-2.06-1.76-2-3.42.1-6.84,0-10.26.06-1.33,0-1.88-.54-1.83-2.14.11-3.35-.77-4.15,3.42-3.91,1.76.1,2.11-.63,2.06-2.49q-.18-7.64-.06-15.28c0-1.65-.44-2.18-1.76-1.93a3.74,3.74,0,0,1-.67,0c-3,0-2.94,0-3-3.49,0-1.58.65-1.94,1.79-2.05s2.74.67,3.41-.47c.55-.92.17-2.58.18-3.92,0-1.9.06-3.8,0-5.7,0-1.1.37-1.38,1.28-1.4,2.66-.06,2.85.07,2.85,3.1,0,10.57,0,21.14,0,31.71,0,1.51.32,2,1.65,1.93a49.71,49.71,0,0,1,5.46-.06c1.19,0,1-.87,1-1.66s.35-1.9-1-1.84c-1.1.06-2.21,0-3.31,0-.78,0-1.33-.28-1.32-1.26,0-2.47-.3-5,.26-7.41,1.14-4.89,4.29-7.75,8.75-7.82,3.92-.06,7.51,3.49,8.5,8,.53,2.4.23,4.8.34,7.2,0,1-.53,1.29-1.3,1.29-1.6,0-3.2.12-4.79,0-1.27-.1-1.3.68-1.29,1.74s-.09,1.87,1.22,1.82c2.43-.1,4.85,0,7.28,0,1.28,0,1.76.48,1.74,2-.07,4.79.12,4.06-3.57,4.11-1.6,0-3.2,0-4.8,0-.72,0-1.15.15-1.07,1.16.25,3.43.46,6.85.67,10.28.08,1.34.92,1,1.58,1,7.28,0,14.56,0,21.84,0,4.15,0,3.49-.67,3.62,4.13,0,1.44-.38,1.88-1.61,1.86-4.19-.07-8.38,0-12.57,0-3.64,0-7.28,0-10.92,0-.18,0-.83-.22-1.19.11a1.2,1.2,0,0,0-.24,1L300,89a1.58,1.58,0,0,0,.41,1.26,1.53,1.53,0,0,0,1.12.27c1.16-.11,24.11-.1,56.24,0,2.61,1.57,9.39,5.78,11.13,8.46.27.4.94,1.44.58,2-.18.28-.71.34-1.69.34q-20.76,0-41.52,0-12.17,0-24.32,0c-1,0-1.8,0-1.78,1.63s.9,1.44,1.77,1.44h62.69c.87,0,1.75.08,2.63.12l.17.31Zm-34.21,15.16h0c1.65,0,3.3,0,5,0a1.23,1.23,0,0,0,1.46-1.1c.65-2.84,1.34-5.67,2-8.51.22-1-.18-1.24-.95-1.23-3.3,0-6.61,0-9.92,0-.74,0-1.1.31-1.29,1.1-.69,2.88-1.38,5.75-2.13,8.61-.24.9,0,1.14.73,1.13C330,119.59,331.68,119.61,333.39,119.61Zm-17,0h0c1.54,0,3.08-.07,4.62,0,1,.06,1.56-.24,1.82-1.53.52-2.65,1.14-5.29,1.88-7.88.4-1.39-.1-1.48-1-1.46-3.19,0-6.38,0-9.57,0-.78,0-1.17.27-1.37,1.19-.61,2.77-1.26,5.53-2,8.26-.33,1.23.11,1.41,1,1.38C313.29,119.56,314.83,119.59,316.37,119.59Zm34.14,0h0c1.66,0,3.31,0,5,0,.89,0,1.27-.37,1.48-1.33.59-2.71,1.2-5.42,1.91-8.09.32-1.21,0-1.43-1-1.42-3.2,0-6.39,0-9.59,0a1.25,1.25,0,0,0-1.41,1.17c-.65,2.76-1.31,5.51-2,8.25-.3,1.16.07,1.46,1,1.42C347.43,119.56,349,119.6,350.51,119.6Z"/><path d="M258.31,154.23H82.47c-1.76,0-3.53-.09-5.29,0-1.24.06-1.63-.46-1.61-1.88.06-6.17.08-12.35,0-18.53,0-1.56.36-2,1.76-2q46.56.07,93.13,0,87.17,0,174.34-.05c1.6,0,2.13.48,2,2.34-.13,2.34.11,4.72,0,7.06-.1,1.67.52,1.87,1.7,1.81,5.9-.3,11.79-.54,17.69-.79l69.41-3c2.64-.11,5.29-.25,7.93-.37.49,0,1.05-.15,1.36.42s-.05,1.2-.34,1.74c-1.18,2.21-2.38,4.41-3.53,6.65-.5,1-1.28.81-2,.84-23,1-46.06,2-69.1,2.87-27.05,1.08-54.1,2.49-81.17,2.86-10.14.13-20.29,0-30.43,0Zm-104.87-5.6c10.15,0,20.29,0,30.43,0,1.31,0,1.87-.31,1.8-2-.11-2.67-.11-5.35,0-8,.06-1.5-.44-1.82-1.61-1.8-5.13.05-10.25,0-15.38,0-15.21,0-30.43,0-45.64,0-1.6,0-1.94.62-1.88,2.27.1,2.54.12,5.09,0,7.63-.07,1.57.4,1.91,1.68,1.9C133.05,148.61,143.25,148.63,153.44,148.63Zm113.68,0v-.06c5.84,0,11.69,0,17.53,0,1,0,1.33-.35,1.31-1.52-.06-2.92,0-5.86,0-8.78,0-1.06-.25-1.46-1.2-1.45q-17.61,0-35.22,0c-1,0-1.23.4-1.21,1.45,0,2.8.11,5.61,0,8.4-.08,1.68.47,2,1.78,2C255.76,148.62,261.44,148.66,267.12,148.66Zm-54.58,0v0c2.7,0,5.4-.05,8.1,0,1.05,0,1.45-.27,1.42-1.57-.08-2.86-.08-5.73,0-8.59,0-1.31-.36-1.62-1.4-1.61-5.4,0-10.8,0-16.2,0-1,0-1.36.31-1.33,1.49.06,2.93.08,5.86,0,8.78,0,1.33.42,1.6,1.44,1.58C207.25,148.63,209.89,148.67,212.54,148.67Z"/><path d="M41.9,155.47c-8.34.06-16.68.11-25,.21-1.11,0-1.5-.4-1.19-2.11.36-2.06.57-4.18.81-6.29.18-1.54.66-2.2,1.83-2.15,5.37.21,10.74.31,16.11.39,1,0,1.39.4,1.36,2-.08,3.87,0,3.88,2.69,4l.53,0c3,.08,3,.08,3.35-4.29.07-1.06.38-1.44,1.08-1.42,8.91.23,17.82.44,26.72.68,1.07,0,1.28.66.73,2.09-.72,1.9-1.5,3.75-2.24,5.63-.44,1.12-1.16,1-1.85,1l-24.9.23Z"/><path d="M237.45,79.16c2.26-.08,4.52-.08,6.78,0,1.76,0,2.23.62,2.24,2.66,0,3.06,0,6.12,0,9.17,0,1.34-.3,2-1.58,1.94-5.57,0-11.14,0-16.71,0-1.17,0-1.55-.5-1.53-1.81.06-3.31.09-6.62,0-9.93,0-1.45.59-1.9,1.62-2.07a4.29,4.29,0,0,1,1-.05C230.62,79.19,235.36,79.22,237.45,79.16Z"/><path d="M376.44,138.4c-1.75.1-3.52.17-5.27.33-1.1.09-1.63-.27-1.61-1.67.06-3.24.06-6.49,0-9.73,0-1.16.4-1.61,1.37-1.61,3.74,0,7.49,0,11.23,0,1,0,1.4.51,1.39,1.61,0,3.12,0,6.24,0,9.36,0,1.16-.4,1.58-1.37,1.56-1.93,0-3.86,0-5.78,0Z"/><path d="M367.6,104.45l-.14.32-.17-.31A.27.27,0,0,1,367.6,104.45Z"/></svg>`;
 // One menu, two ways to browse: every charter, or month by month.
 const viewToggle=(calendar,results)=>`<div class="ke-availability-views" role="group" aria-label="How to see charters">
-            <button type="button" class="ke-availability-view" data-charter-view="all" aria-pressed="true" aria-controls="${results}">All charters</button>
-            <button type="button" class="ke-availability-view" data-charter-view="month" aria-pressed="false" aria-controls="${calendar} ${results}">By month</button>
+            <button type="button" class="ke-availability-view" data-charter-view="month" aria-pressed="true" aria-controls="${calendar} ${results}">By month</button>
+            <button type="button" class="ke-availability-view" data-charter-view="all" aria-pressed="false" aria-controls="${results}">All charters</button>
           </div>`;
 const backGlyph='<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M8 1.5 3.5 6 8 10.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 // "On hold" shows only when a held charter exists (the mount unhides it).
@@ -429,11 +429,12 @@ async function mountCharterMap(root,options={}) {
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const calibrate=new URLSearchParams(location.search).has('calibrate');
   let view='world',activeRegion=null,activeLocation=null,camera={x:0,y:0,scale:1},flight=null,frame=0;
-  let drift={x:0,y:0},pointer={x:0,y:0},disposed=false,charterView='all',pickedDay=null;
+  let drift={x:0,y:0},pointer={x:0,y:0},disposed=false,charterView='month',pickedDay=null;
   let regionRestScale=1,hovered=null;
   const canHover=matchMedia('(hover: hover)'),contactUrl=options.contactUrl||'https://www.kudanil.com/contact';
   // Quick dates the visitor picked (inclusive keys; none by default) and the month "By month" shows. Enquiries quote picked dates only.
-  let range={from:null,to:null},rangeMonth=null;
+  // browsed: the visitor changed the month themselves; until then the boat shows where it is today.
+  let range={from:null,to:null},rangeMonth=null,browsed=false;
   // Boat marker: where the yacht is today, or on the chosen departure date. `shown` glides toward `target`.
   const voyages=options.voyages||VOYAGES;
   const places={...Object.fromEntries(LOCATIONS.map(p=>[p.name.toLowerCase(),p])),...(options.ports||PORTS),
@@ -470,7 +471,7 @@ async function mountCharterMap(root,options={}) {
         </div>
         <div class="ke-availability-controls">${viewToggle(`${pickerId}-cal`,`${pickerId}-results`)}</div>
         <section class="ke-range" id="${pickerId}-cal" aria-label="Charters by month" hidden>${calendarFrame(`${pickerId}-picker`,'<div class="ke-range-grid"></div>')}
-          <button type="button" class="ke-find-dates" data-find-month>Next month with charters</button></section>
+          <button type="button" class="ke-find-dates" data-find-month>Show next availability</button></section>
         <section class="ke-schedule-results" id="${pickerId}-results" aria-label="Charters"><div class="ke-schedule-list"></div></section>
       </div>
     </aside>
@@ -802,7 +803,7 @@ async function mountCharterMap(root,options={}) {
         <img src="${tripImage(t)}" alt="${escapeHTML(t.route)} expedition" loading="lazy">
         <div class="ke-trip-main"><div class="ke-trip-heading"><div class="ke-trip-top"><h4>${escapeHTML(t.dates)}</h4><span class="ke-nights">${escapeHTML(t.nights)} nights</span></div><div class="ke-trip-tags"><span class="ke-status available ${t.type==='cabin'?'cabin':'private'}">${t.type==='cabin'?'Cabin booking':'Private charter'}</span></div></div>
         <p class="ke-trip-route">${routeMarkup(t.route,id)}</p>${where}<p class="ke-activity">${escapeHTML(t.activity)}</p>
-        <a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{trip:t,destinationName,range:range.from?rangeLabel():null}))}" target="_blank" rel="noopener">Book this charter</a></div></article>`;
+        <a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{trip:t,destinationName,range:range.from?rangeLabel():null}))}" target="_blank" rel="noopener">${t.type==='cabin'?'Book your cabin':'Reserve this trip'}</a></div></article>`;
   }
   const planLink=(name,when)=>`<a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{destinationName:name,range:when}))}" target="_blank" rel="noopener">Get in touch to plan your next adventure</a>`;
   // Never a dead end: say what is missing, then offer the next step.
@@ -835,8 +836,8 @@ async function mountCharterMap(root,options={}) {
     $('.ke-schedule-list').innerHTML=html;
   }
   function placeBoat() {
-    // The boat shows today, the chosen departure, or (browsing by month) the first of the month on screen.
-    const today=dateKey(),from=range.from||(charterView==='month'?`${rangeMonth.year}-${String(rangeMonth.month+1).padStart(2,'0')}-01`:today),day=from<today?today:from,at=boatPosition(voyages,places,day,seaway);
+    // The boat shows today, the chosen departure, or (once the visitor browses months) the first of the month on screen.
+    const today=dateKey(),from=range.from||(charterView==='month'&&browsed?`${rangeMonth.year}-${String(rangeMonth.month+1).padStart(2,'0')}-01`:today),day=from<today?today:from,at=boatPosition(voyages,places,day,seaway);
     boat.hidden=!at;if(!at)return;
     boatShown={x:at.x,y:at.y};
     if(at.heading)boat.dataset.heading=at.heading>0?'east':'west';
@@ -860,7 +861,7 @@ async function mountCharterMap(root,options={}) {
     if(announce)status.textContent=from?`${charterCount(listFor(placeId(),false).length)}, ${rangeLabel()}`:'Dates cleared';
   }
   function browseMonth(value) {
-    rangeMonth=clampMonth(value,monthRange(trips,null));pickedDay=null;
+    rangeMonth=clampMonth(value,monthRange(trips,null));pickedDay=null;browsed=true;
     refreshMenu();
   }
   function setSheet(open) {
