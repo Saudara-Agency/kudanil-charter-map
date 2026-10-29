@@ -485,8 +485,8 @@
 .ke .ke-rday.is-inside.unavailable>span,.ke .ke-rday.is-preview.unavailable>span{background:var(--red-bg)}
 .ke .ke-rday.is-inside.tentative>span,.ke .ke-rday.is-preview.tentative>span{background:var(--yellow-bg)}
 .ke .ke-rday.is-inside>span,.ke .ke-rday.is-preview>span{box-shadow:inset 0 0 0 var(--hair) var(--navy-40)}
-/* Both view buttons fit on one line at every desktop width. */
-.ke .ke-availability-view{font-size:var(--t-meta);white-space:nowrap;padding-inline:calc(var(--u) * .8)}
+/* View buttons wrap to two lines rather than touch their border (narrow phones, large system text). */
+.ke .ke-availability-view{font-size:var(--t-meta);padding-inline:calc(var(--u) * .8)}
 /* Owner (27 Oct): one text size. Everything that is not a heading is 13px; weight (400/500) and colour carry the hierarchy.
    Headings stay larger: panel titles, section heads, month names, banner and map names. */
 .ke{--t-meta:13px;--t-ui:13px;--t-data:13px;--fs-xs:13px;--fs-s:13px;--fs-b:13px;--fs-h5:13px}
