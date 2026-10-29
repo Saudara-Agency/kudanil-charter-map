@@ -804,7 +804,7 @@ async function mountCharterMap(root,options={}) {
         <p class="ke-trip-route">${routeMarkup(t.route,id)}</p>${where}<p class="ke-activity">${escapeHTML(t.activity)}</p>
         <a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{trip:t,destinationName,range:range.from?rangeLabel():null}))}" target="_blank" rel="noopener">Book this charter</a></div></article>`;
   }
-  const planLink=(name,when)=>`<a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{destinationName:name,range:when}))}" target="_blank" rel="noopener">Plan a private charter</a>`;
+  const planLink=(name,when)=>`<a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{destinationName:name,range:when}))}" target="_blank" rel="noopener">Get in touch to plan your next adventure</a>`;
   // Never a dead end: say what is missing, then offer the next step.
   function emptyMarkup(id,monthly) {
     const name=id?lookup[id].name:'Indonesia';
@@ -814,7 +814,7 @@ async function mountCharterMap(root,options={}) {
     }
     if(range.from)return `<p class="ke-empty">No charters${id?` to ${escapeHTML(name)}`:''} on these dates.</p><div class="ke-menu-actions"><button type="button" class="ke-btn" data-clear-range>Clear dates</button>${planLink(name,rangeLabel())}</div>`;
     const region=id&&regionOf(id),nearby=region&&region.id!==id?listFor(region.id).slice(0,2):[];
-    return `<p class="ke-empty">${id?`No charters to ${escapeHTML(name)} are planned yet. We can plan a private one for you.`:'No upcoming charters are planned yet. We can plan a private one for you.'}</p>
+    return `<p class="ke-empty">${id?`No expeditions to ${escapeHTML(name)} are planned yet.`:'No upcoming expeditions are planned yet.'}</p>
       <div class="ke-menu-actions">${planLink(name,null)}</div>${nearby.length?`<h3>Nearby in ${escapeHTML(region.name)}</h3>${nearby.map(t=>tripCard(t,null)).join('')}`:''}`;
   }
   function renderMenu() {

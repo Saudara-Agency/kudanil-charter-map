@@ -435,6 +435,8 @@ button.ke-rday:active:not(:disabled)>span{transform:scale(.94)}
 .ke .ke-trip{grid-template-columns:max(88px,calc(var(--u) * 12.8)) minmax(0,1fr) auto}
 /* No divider above the first charter. */
 .ke .ke-schedule-list>.ke-trip:first-child{border-top:0}
+/* A list that starts straight with a card already has the card's own top padding; no second gap above it (phone place view). */
+.ke .ke-schedule-results:has(>.ke-schedule-list:first-child>.ke-trip:first-child){padding-top:0}
 /* Nights share the date line, so the card is two columns and status labels stay on one line. */
 .ke .ke-trip{grid-template-columns:max(88px,calc(var(--u) * 12.8)) minmax(0,1fr)}
 .ke .ke-trip-top{display:flex;align-items:baseline;justify-content:space-between;gap:calc(var(--u) * 1)}
