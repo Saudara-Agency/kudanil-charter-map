@@ -26,16 +26,22 @@ function defaultMonth(trips, location, today=dateKey()) {
   const key=upcoming ? (upcoming.start>today ? upcoming.start : today) : today;
   return {year:Number(key.slice(0,4)),month:Number(key.slice(5,7))-1};
 }
-// `location` null means every destination: the yacht is one boat, so any booking on a day blocks it.
-const scoped=(trips, location)=>location==null?trips:tripsAt(trips,location);
-function dayStatus(trips, location, key, today=dateKey()) {
+// `place` null means every destination; a string or an array of destination ids narrows it.
+const inPlace=(t,place)=>place==null||(Array.isArray(place)?t.locations.some(l=>place.includes(l)):t.locations.includes(place));
+const scoped=(trips, location)=>location==null?trips:trips.filter(t=>inPlace(t,location));
+// Binary for guests (owner call, 2 Nov 2026): green = bookable, red = taken. Days with no sailing at all are green
+// ('open', enquire), because the yacht is free; only dry dock closes a date (grey).
+// `busy` = every voyage, any status (one boat: a sailing anywhere takes the day); `drydocks` = [{start,end}].
+function dayStatus(trips, location, key, today=dateKey(), {busy=trips, drydocks=[]}={}) {
   if(key<today) return 'unavailable';
-  const matches=scoped(trips,location).filter(t=>t.start<=key && t.end>=key);
-  // A hold or booking wins over an overlapping available record; never invent availability.
-  if(matches.some(t=>t.status==='booked'))return 'unavailable';
-  if(matches.some(t=>t.status==='tentative'))return 'tentative';
-  return matches.some(t=>t.status==='available') ? 'available' : 'unavailable';
+  const on=t=>t.start<=key&&t.end>=key;
+  if(drydocks.some(on))return 'drydock';
+  if(!busy.some(on)&&!trips.some(on))return 'open';
+  // A hold, booking or a sailing already under way wins over an overlapping available record.
+  const here=scoped(trips,location).filter(on);
+  return here.length&&here.every(t=>t.status==='available'&&t.start>=today)?'available':'unavailable';
 }
+const bookableDay=status=>status==='available'||status==='open';
 // Months a visitor can browse: the current month through December of the year after the last scheduled trip.
 function monthRange(trips, location, today=dateKey()) {
   const lastYear=scoped(trips,location).reduce((year,t)=>Math.max(year,Number(t.end.slice(0,4))),Number(today.slice(0,4)));
@@ -50,23 +56,23 @@ function tripsInMonth(trips, location, {year,month}, today=dateKey()) {
   const last=new Date(Date.UTC(year,month+1,0)).toISOString().slice(0,10);
   return tripsAt(trips,location).filter(trip=>trip.end>=today&&trip.start<=last&&trip.end>=first);
 }
-// For the month picker: which months of a year contain at least one bookable (available or tentative) upcoming day.
-function monthAvailability(trips, location, year, today=dateKey()) {
+// For the month picker: which months of a year contain at least one green (charter or open) upcoming day.
+function monthAvailability(trips, location, year, today=dateKey(), extra={}) {
   return Array.from({length:12},(_,month)=>{
     const days=new Date(Date.UTC(year,month+1,0)).getUTCDate();
     for(let day=1;day<=days;day++){
       const key=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-      if(dayStatus(trips,location,key,today)!=='unavailable')return true;
+      if(bookableDay(dayStatus(trips,location,key,today,extra)))return true;
     }
     return false;
   });
 }
-function monthCells(year,month,trips,location,today=dateKey()) {
+function monthCells(year,month,trips,location,today=dateKey(),extra={}) {
   const first=new Date(Date.UTC(year,month,1));
   return Array.from({length:42},(_,i)=>{
     const date=new Date(Date.UTC(year,month,1-first.getUTCDay()+i));
     const key=date.toISOString().slice(0,10), outside=date.getUTCMonth()!==first.getUTCMonth();
-    return {key,day:date.getUTCDate(),outside,status:outside?null:dayStatus(trips,location,key,today)};
+    return {key,day:date.getUTCDate(),outside,status:outside?null:dayStatus(trips,location,key,today,extra)};
   });
 }
 // Date-range search (persistent schedule sidebar). A sailing matches when it overlaps the chosen dates at all.
@@ -88,11 +94,11 @@ function charterMonths(list) {
 }
 const dayNumber = key => Date.parse(`${key}T00:00:00Z`)/864e5;
 // Range calendar cells: every location at once, coloured like the destination calendar.
-function rangeCells(year, month, trips, today=dateKey()) {
+function rangeCells(year, month, trips, today=dateKey(), extra={}) {
   const first=new Date(Date.UTC(year,month,1));
   return Array.from({length:42},(_,i)=>{
     const date=new Date(Date.UTC(year,month,1-first.getUTCDay()+i)),key=date.toISOString().slice(0,10);
-    return {key,day:date.getUTCDate(),outside:date.getUTCMonth()!==month,past:key<today,status:dayStatus(trips,null,key,today)};
+    return {key,day:date.getUTCDate(),outside:date.getUTCMonth()!==month,past:key<today,status:dayStatus(trips,null,key,today,extra)};
   });
 }
 // Map highlight: opacity of each region's bronze islands.
@@ -280,6 +286,11 @@ const TRIPS = [
     img:'https://cdn.prod.website-files.com/689eb59b898d833188934dfd/68e324054c60e2add25b3956_Kudanil_JackJohns_LR_27_DJI_0089%20(4).jpg',
     route:'Ambon - Sorong', stops:'Ambon, Northern Seram & Southern Raja Ampat', activity:'Cruise & Dive',
     locations:['seram-island', 'sorong', 'raja-ampat'] },
+  // Owner demo 2026-11-02: booked sample (red days), local prototype only.
+  { start:'2026-11-20', end:'2026-11-26', dates:'20 Nov – 26 Nov 2026', status:'booked', type:'exclusive', nights:6,
+    img:'https://cdn.prod.website-files.com/689eb59b898d833188934dfd/68e4a579be58efb30ae6adc3_DJI_20241116090720_0259_D%20(1).jpg',
+    route:'Sorong - Sorong', stops:'Raja Ampat', activity:'Dive or Cruise',
+    locations:['sorong', 'raja-ampat'] },
   { start:'2026-12-04', end:'2026-12-12', dates:'4 Dec – 12 Dec 2026', status:'available', type:'exclusive', nights:8,
     img:'https://cdn.prod.website-files.com/689eb59b898d833188934dfd/68e4a579be58efb30ae6adc3_DJI_20241116090720_0259_D%20(1).jpg',
     route:'Sorong - Sorong', stops:'Raja Ampat', activity:'Sur, Dive or Cruise',
@@ -364,6 +375,8 @@ const VOYAGES = [
   ['2027-10-03','2027-10-15','Kupang - Tambolaka'],['2027-10-18','2027-10-28','Labuan Bajo - Kupang'],
   ['2027-10-30','2027-11-13','Kupang Alor Banda Neira Ambon'],['2027-11-15','2027-11-27','Ambon - Sorong'],
 ].map(([start,end,route])=>({start,end,route}));
+// Dry dock periods (CMS "Dry Dock" collection on Webflow). Local demo sample only, not real dates.
+const DRYDOCKS = [{start:'2027-09-14', end:'2027-09-30'}];
 
 // Generated by tools/gen-sea.mjs from assets/map-land.svg. Land = 1 bit per 5px cell, row-major, LSB first.
 const SEA={w:384,h:216,land:'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMB/jgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAID//wEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAID//wMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAID//wcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//w8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD+/w8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD8/z8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAD4/z8AAAAAAAAAAAAAAAAAAAAAAP8HAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAAAADw/z8AAAAAAAAAAAAAAAAAAAAAgP8fAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAADg/38AAAAAAAAAAAAcAAAAAAAAwP//AAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAADA//8BAAAAAAAAAAAcAAAAAAAA4P8/AAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAACA//8BAAAAAAAAAAAYAAAAAAAA4P9/AAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAA//8HAAAAAAAAAAAYAAAAAAAA4P9/AAAAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAA+P8fAAAAAAAAAAAAAAAAAAAA4P8fAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAA8P9/AAAAAAAAAAAAAAAAAAAA4P8/AAAAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAA4P//AAAAAAAAEAAAAAAAAAAA4P8/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwP//AwAAAAAAEAAAAAAAAAAA4P8PAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwP//BwAAAAAAAAAAAAAAAAAA4P8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgP//BwAAAAAAAQAAAQAAAAAA/P8/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAP/+BwAAAAAAAAAAAAAAAAAA/P8/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAcAP7/HwAAAAAAAAAAAAAAAAAA/P9/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABwAP7/PwAAAAAAAAAAAAAAAAAA/P//AAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAADAAP73PwAAAAAAAAAAAAAAAAAA/v//AQAAAAAAAAAAAA4AAAAAAAAAAAAAAAAAAACAAP7/fwwAAAAAAAAAAAAAAAAA////AQAAAAAAAAAAAA8AAAAAAAAAAAAAAAAAAAAAYPD//x4AAAAAAAAAAAAAAACA////AAAAAAAAAAAAQA4AAAAAAAAAAAAAAAAAAAAAAMD//78BAAAAAAAAQAAAAACA////AAAAAAAAAAAAYAYAAAAAAAAAAAAAAAAAAAAAAAD///8BAAAAAAAAYAAAAAAA////AAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAD+//8BAAAAAAAAcAAAAACA////AQAAAAAAAAAAeAAAAAAAAAAAAAAAAAAAAAAAAAD8//8DAAAAAAAAcAAAAADA////AwAAAAAAwAAAeAAAAAAAAAAAAAAAAAAAAAAAAAD+//9/AAAAAAAA+AAA8APA////BwAAAAAAwAEAeAwAAAAAAAAAAAAAAAAAAAAA4AD8//9/AAAAAAAA/AEA+Af/////HwAAAAAA8AEAeB8AAAAAAAAAAAAAAAAAAAAA4AH8//9/AAAAAAAA/AMA+L//////PwDABwAA8AAAfB8AAAAAAAAAAAAAAAAAAAAAwAP4//9/AuwAAAAA/g8A/v//////fwDADwAA/AAAPA8AAAAAAAAAAAAAAAAAAAAAgAf4////D+4AAAAA/h/+/////////wDA/wMAfgAA3A8AAAAAAAAAAAAAAAAAAAAAAAf4////T9oAAAAA/v///////////wDk/7+fPwAA2AMAAAAAAAAAAAAAAAAAAAAAAAbw////T5AAAAAA/v////////9/AAD+////HwAA+gEAAAAAAAAAAAAAAAAAAAAAAAbw////FwAAAAAA/v////////8/AAD/////DwAA+AMAAAAAAAAAAAAAAAAAAAAAAADw////fwAAAAAA/v////////8/AAD/////BwAA+A8AAAAAAAAAAAAAAAAAAAAAAADw/////wAAAAAA/v////////8fAIAHAAD+AwAAMAwAAAAAAAAAAAAAAAAAAAAAAADg/////wEAAAAA/P////////8fAIADAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAACD/////8EAAAAA+P////////8fAIABAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAA/v///8EAAAAA+P////////8fAKABAAAAAAAAMAAAEAAAAAAAAAAAAAAAAAAAAMAA/v//f8ABAAAA+P////////8PAOAAAAAAAAAAMAAE/gAAAAAAAAAAAAAAAAAAAIAA/P///8EDAAAA/P////////8PAMAAAAIAAAAAcQAA/wEAAAAAAAAAAAAAAAAAAIAA+P///0EAAAAA+P////////8fAMABgAEAAAAAbwAAeAAPAAAAAAAAAAAAAAAAAMAA+P//f2AAAAAA+P////////8fAMABYAAAAAAAzwAACIB/AAAAAAAAAAAAAAAAAAAA8P//PyAAAAAA8P////////8fAMABAMAHAAAAjgAAAOD/AAAAAAAAAAAAAAAAAAAA4P//fwAAAAAA8P////////8fAOABAOwHAAAAPwEAAP7/PwAeAAAAAAAAAAAAAAAAwP///wAAAAAA8P////////8PAPADEP4HAAAAAAIAHP//PwA4AAAAAAAAAAAAAAAGwP///w8AAAAAwP////////8DAPAP+D8CAAAAAAAAcP//PxBwAAAAAAAAAAAAAAAOwP///z8AAAAA4P7///////8BAPgf/B8AAAAAAAAwcP//fwDwAAAAAAAAAAAAAAAOgP///z8AAAAAYP7///////8AAPgf/s8PAAAACAAA8P//fwAAAAAAAAAAAAAAAAAeAP///z8AAAAAAPz//////z8AAPj//88PAAAAOAAAwP//fwAAAAAAAAAAAAAAAAAcAP///z8AAgAAAPz//////x8AAPz//8cKAAAAfAAAAPz/fwAAABgAAAAAAAAAAAA8AP7//3/gBwAAAPz//////x8AAPz//wAIDAAA/AAAAOD/PwB+AD8AAAAAAAAAAAAwAP7//3/gBwAAAP7//////w8AAPj/PwAA/AUAAADgA8D//wDwz/8BAAAAAAAAAAAAAPz////wDwAAAPz//////w8AAPj/NwAA/v0AAADwA8D/fwAAwf8HAAAAAAAAAAAAAPz////zDwAAAPz//////w8AAPz/DwAADEAAAACAAcD/fwEAgP8fAAAAAAAAAAAAAfz///8DDwAAAPz//////x8AAP7/HwAAAEAAAAAAAID/fwAA8P8/AAAAAAAAAAAAA/z///8DDgAAAPj//////x8AAP7/PwAAAEAAAAAAAAAAcAAA//8/AAAAAAAAAAAAAPj///9/HgAAAPj//////x8AAP7/fwAAAIAAAAAAAACA8AAA//8/AAAAAAAAAAAACPD//////AEBAPj//////x8AAP///wAAAAAAAAAAAADA/waA//8/AAAAAAAAAAAAGOD//////YAPAPj//////w8AgP+//wAAAAAAAAAAAIDn/wfA//8/AAAAAAAAAAAAMMD/////fYAPAPD//////w8AwP8P/wEAAAAAAEAOAMD//wfg//8/AAAAAAAAAAAAYMD/////86EPANj//////wcAgP8H/wMAAAAAgP8/AMD//x/g//8/AAAAAAAAAAAAYID/////x4APAAAG//3//wcAgP8D/wMAAAAYgP//AwD+/w/w//8/AAAAAAAAAAAAQAD/////B4AEAAAA//n//wcAgP8H/wcAAID/UP//BwD4/x/8//8/AAAAAAAAAAAAAAD+////BwAAAAAA/8D//wcAgP+H/wcAAID/SN7/DwD4/z/8//8/AAAAAAAAAAAAAAD8////AwAAAAAAI8D4/w8AgP+H/wMAAID/QQzEHwDg//////8/AAAAAAAAAAAAAAD4////AQAAAAAAAADg/w8AAPCH/wMBAAD/AR8AHwDg+/////8/AAAAAAAAAAAAAADg////AQAAAAAAAADAfwYAAPAP/wcAAAD+wAEAHADw8/////8/AAAAAAAAAAAAAADg////AwAAAAAAAADAHwYAAPAH/g8AAAAwAAAAEADw4/////8/AAAAAAAAAAAAAADg////AwAAAAAAAADABwYAAOAH/B8AAAAAAwAAAADwwf////8/AAAAAAAAAAAAAADA////AQAAAAAAAADAAQAAAOAH8N8DAAAAAAAAAABgAPj///8/AAAAAAAAAAAAAACA////AQAAAAAAAAAAAAAAAOAH8P8BAAAAAAAAAAAAAPj///8/AAAAAAAAAAAAAAAA/v//AQAAAAAAAAAAAAAAAOAH8H8AAAAAAAAIAAAAAOD///8/AAAAAAAAAAAAAAAA/P//AwAAAAAAAAAAAAAAAOAH8K8BAAAAAABMAAAAAID///8/AAAAAAAAAAAAAAAA+P//AwAAAAAAAAAAAAAAAOAH8MEBAAAAAABkAAAAAADA//8/AAAAAAAAAAAAAAAA4P//AwAAAAAAAAAAAAAAAPAH8PgBAAAAAAB+AAAAAAAA//8/AAAAAAAAAAAAAAAAwP//AwAAAAAAAAAAAAAAAPAH4PwAAAAAAAAAAAAAAAAA/P8/AAAAAAAAAAAAAAAAAP//AwAAAAAAAAAAAAAAAPAHAPwAAAAAAAAAAAAAAAAAwP8/AAAAAAAAAAAAAAAAAP7/AQAAAAAAAAAAAAAAAPADgNwAAAAAAAAAAAAAAAAAAP8/AAAAAAAAAAAAAAAAAPz/AQAAAAAAAAAAAAAAAPgHwPwBAAAAAAAAAAAAAAAAAPw/AAAAAAAAAAAAAAAAAPj/AQAAAAAAAAAAAAAAAPgHwPwRAAAAAAAAAAAAAAAAAPg/AAAAAAAAAAAAAAAAAPD/AQAAAAAAAAAAAAAAAPgPgHAgAAAAAAAAAABAAAQAAOA/AAAAAAAAAAAAAAAQAODOAQAAAAAAAAAAAAAAAHAAAHAAAAAAAAAAAABYAA4AAMA/AAAAAAAAAAAAAAAAAMCMAQAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAogA8AAMA/AAAAAAAAAAAAAAAAAIAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoAA8AAIA/AAAAAAAAAAAAAAAAAAAAPBwAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAAAAA8AAAA/AAAAAAAAAAAAAAAAAAAA/j8AAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAAAgA8AAAA/AAAAAAAAAAAAAAAAAAAA/v8TAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAwA8AAAA/AAAAAAAAAAAAAAAAAAAA/v8/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgBcAAAA+AAAAAAAAAAAAAAAAAAAA//8/AIADAAAAAAAAAAAAAAAAAAAAAAAAAAAAwA8AAAA8AAAAAAAAAAAAAAAAAACQ//9/AIAnAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAsAAAA4AAAAAAAAAAAAAAAAAADg////AMD/AAAAAAAAAAAAAAAAAAAAAAAAAAQAwAEAAAA8AAAAAAAAAAAAAAAAAACA+P///+3/P/8DGAAAAAAAAAAAAAAAAAAAAAAAgAAAAAA8AAAAAAAAAAAAAAAAAAAA4P////////8DCAAAAAAgAAAAAAAAAAAAAAAAAAAAAAA8AAAAAAAAAAAAAAAAAAAAwP////////8AgAAAAAAgAAAAAAAAAAgAADgAAAAAAAAwAAAAAAAAAAAAAAAAAAAA4P///////wAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAA4AAAAAAAAAAAAAAAAAAAAwP///////wAAAAAAAAAAAAAAAAAAAAAAAA4AAAAAAAAgAAAAAAAAAAAAAAAAAAAAAOD//////wAAAAAAAAAAAAAAAAAAAAAAIA8AAAAAAIAvAAAAAAAAAAAAAAAAAAAAAID//////wMCAAAAAAAAAAAAAAAcAAAAwAcAAAAAAOA/AAAAAAAAAAAAAAAAAAAAAAA84v////8fAAAAAAAAAAAAAMAfAAAAgAMAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAAAAAP7///8fAAAAAAAAAAAAAMAHAAAYgAEAAAAAAPA/AAAAAAAAAAAAAAAAAAAAAAAAAPD///8fAAAAAAAAAAAAAAAAAAAQAAAAAAAAAPg/AAAAAAAAAAAAAAAAAAAAAAAAAMD///9/HwDgAwAAAEAA+AAA4AAAQAAAAAAAAPgfAAAAAAAAAAAAAAAAAAAAAAAAAADo///vPzzQswA8AMA7/gAAAAAAIAAAAAAAAPwfAAAAAAAAAAAAAAAAAAAAAAAAAAAA4PHPPz6W/wH/AXCfPQAAAAAAAAAAAAAAAIQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAPHj5//pn/9/EMAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwBL5//uv//x8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABJ///8D//wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMz/AACAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAbAAAAAAAA4AEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAA+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8BAADA/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8DAADgfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP8fAADgfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAfAADgPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIA/AADwHwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB/AADgDwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+AAD8AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'};
@@ -384,8 +397,8 @@ const viewToggle=(calendar,results)=>`<div class="ke-availability-views" role="g
             <button type="button" class="ke-availability-view" data-charter-view="all" aria-pressed="false" aria-controls="${results}">All charters</button>
           </div>`;
 const backGlyph='<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M8 1.5 3.5 6 8 10.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-// "On hold" shows only when a held charter exists (the mount unhides it).
-const legend='<div class="ke-legend"><span><i class="available"></i>Available</span><span><i class="unavailable"></i>Unavailable</span><span data-holds hidden><i class="tentative"></i>On hold</span></div>';
+// Guests see two states only; dry dock days wear "On request" (owner 6 Nov: never say dry dock on the calendar).
+const legend='<div class="ke-legend"><span><i class="available"></i>Available</span><span><i class="unavailable"></i>On request</span></div>';
 // Month header and month/year picker overlay over the day grid, wired by monthNav.
 const calendarFrame=(id,grid)=>`<div class="ke-calendar-top"><button type="button" class="ke-calendar-arrow" data-step="-1" aria-label="Previous month">‹</button>
     <button type="button" class="ke-period" aria-expanded="false" aria-controls="${id}" aria-haspopup="dialog"><span class="ke-month" aria-live="polite"></span>${chevron}</button>
@@ -437,6 +450,8 @@ async function mountCharterMap(root,options={}) {
   let range={from:null,to:null},rangeMonth=null,browsed=false;
   // Boat marker: where the yacht is today, or on the chosen departure date. `shown` glides toward `target`.
   const voyages=options.voyages||VOYAGES;
+  // Day colours know every voyage (one boat) and the dry dock periods.
+  const drydocks=options.drydocks||DRYDOCKS,dayInfo={busy:voyages,drydocks};
   const places={...Object.fromEntries(LOCATIONS.map(p=>[p.name.toLowerCase(),p])),...(options.ports||PORTS),
     ...Object.fromEntries((options.locations||[]).map(p=>[p.name.toLowerCase(),p]))};
   const seaway=seaRouter(options.sea||SEA);
@@ -481,14 +496,13 @@ async function mountCharterMap(root,options={}) {
       <div class="ke-quick-pop" role="dialog" aria-label="Choose dates" hidden>
         <div class="ke-quick-presets"></div>
         <div class="ke-quick-main">
-          <div class="ke-quick-fields"><span class="ke-quick-field" data-quick-field="from"></span><span aria-hidden="true">to</span><span class="ke-quick-field" data-quick-field="to"></span></div>
           <div class="ke-quick-months">
             <button type="button" class="ke-quick-step" data-quick-step="-1" aria-label="Previous month">&lsaquo;</button>
             <div class="ke-quick-month"><b></b><div class="ke-range-grid ke-quick-grid"></div></div>
             <div class="ke-quick-month"><b></b><div class="ke-range-grid ke-quick-grid"></div></div>
             <button type="button" class="ke-quick-step" data-quick-step="1" aria-label="Next month">&rsaquo;</button>
           </div>
-          <div class="ke-quick-foot"><button type="button" class="ke-quick-clear" data-quick-clear>Clear</button><button type="button" class="ke-btn ke-quick-apply" data-quick-apply>Apply</button></div>
+          <div class="ke-quick-foot"><span class="ke-quick-span" data-quick-span aria-live="polite"></span><button type="button" class="ke-btn ke-quick-cancel" data-quick-cancel>Cancel</button><button type="button" class="ke-btn ke-quick-apply" data-quick-apply>Update</button></div>
         </div>
       </div>
     </div>
@@ -747,19 +761,23 @@ async function mountCharterMap(root,options={}) {
   }
   // Day grid. `menuDays` (the menu calendar) makes only bookable days buttons and marks the tapped charter's days;
   // without it (quick dates) every future day is a button for picking a range.
+  const dayWords={available:'available',open:'available, enquire',unavailable:'on request',drydock:'on request'};
   function dateGrid(cells,today,range,menuDays=null) {
     const end=range.to||range.from;
     // Same-colour neighbours in a week join into one band (runs), like Kumo/Meta pickers; ends of a run are rounded.
-    const tone=cell=>!cell||cell.outside||cell.past?'':(cell.key===range.from||(range.to&&cell.key===range.to))?'cap':menuDays?.has(cell.key)?'picked':`${cell.status}${range.from&&cell.key>range.from&&cell.key<end?'-in':''}`;
+    // Open days (no sailing) wear the same green as charter days: one "available" for guests.
+    const look=status=>status==='open'?'available':status==='drydock'?'unavailable':status;
+    const tone=cell=>!cell||cell.outside||cell.past?'':(cell.key===range.from||(range.to&&cell.key===range.to))?'cap':menuDays?.has(cell.key)?'picked':(range.from&&cell.key>range.from&&cell.key<end?'in':look(cell.status));
     return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].map(day=>`<span class="ke-weekday" aria-label="${day}">${day[0]}</span>`).join('')+
       cells.map((cell,i)=>{
         // Days outside the month are plain spacers (no hover, no box). Always six weeks, so the panel never changes height between months.
         if(cell.outside)return '<span class="ke-rday-pad" aria-hidden="true"></span>';
         const banded=range.to&&range.to>range.from,inside=range.from&&cell.key>range.from&&cell.key<end;
-        const classes=['ke-rday',cell.past?'past':cell.status,cell.key===range.from&&'is-start',range.to&&cell.key===range.to&&'is-end',banded&&(cell.key===range.from||cell.key===range.to)&&'has-band',inside&&'is-inside',menuDays?.has(cell.key)&&'is-picked',cell.key===today&&'is-today',tone(cell)&&i%7&&tone(cells[i-1])===tone(cell)&&'run-l',tone(cell)&&i%7<6&&tone(cells[i+1])===tone(cell)&&'run-r'].filter(Boolean).join(' ');
-        const label=`${shortDate(cell.key)}${cell.past?'':`, ${cell.status==='tentative'?'on hold':cell.status}`}`;
-        // In the menu only bookable days react; nothing inert takes hover or taps.
-        if(menuDays&&(cell.past||cell.status!=='available'))return `<span class="${classes}" aria-label="${label}"><span>${cell.day}</span></span>`;
+        const band=c=>c&&!c.outside&&!c.past&&((range.from&&c.key>=range.from&&c.key<=end)||menuDays?.has(c.key));
+        const classes=[band(cell)&&'in-band',band(cell)&&!(i%7&&band(cells[i-1]))&&'band-l',band(cell)&&!(i%7<6&&band(cells[i+1]))&&'band-r',menuDays&&cell.key===pickedDay&&'is-tapped','ke-rday',cell.past?'past':cell.status==='open'?'available open':cell.status==='drydock'?'unavailable drydock':cell.status,cell.key===range.from&&'is-start',range.to&&cell.key===range.to&&'is-end',banded&&(cell.key===range.from||cell.key===range.to)&&'has-band',inside&&'is-inside',menuDays?.has(cell.key)&&'is-picked',cell.key===today&&'is-today',tone(cell)&&i%7&&tone(cells[i-1])===tone(cell)&&'run-l',tone(cell)&&i%7<6&&tone(cells[i+1])===tone(cell)&&'run-r'].filter(Boolean).join(' ');
+        const label=`${shortDate(cell.key)}${cell.past?'':`, ${dayWords[cell.status]}`}`;
+        // In the menu every coming day reacts: green shows its charter or an enquiry, red and dry dock say why and who to ask.
+        if(menuDays&&cell.past)return `<span class="${classes}" aria-label="${label}"><span>${cell.day}</span></span>`;
         return `<button type="button" class="${classes}" data-day="${cell.key}" ${cell.past?'disabled':''} aria-pressed="${Boolean(cell.key===range.from||cell.key===range.to||inside||menuDays?.has(cell.key))}"
           aria-label="${label}"><span>${cell.day}</span></button>`;
       }).join('');
@@ -771,8 +789,9 @@ async function mountCharterMap(root,options={}) {
     const today=dateKey(),scope=calendarTrips(placeId()),picked=new Set();
     monthlyNav.sync();
     scope.filter(t=>t.status==='available'&&pickedDay&&t.start<=pickedDay&&t.end>=pickedDay).forEach(t=>{for(let k=t.start;k<=t.end;k=shiftKey(k,{days:1}))picked.add(k);});
-    const cells=monthCells(rangeMonth.year,rangeMonth.month,scope,null,today).map(cell=>({...cell,past:cell.key<today}));
-    $('.ke-range-grid').innerHTML=dateGrid(cells,today,{from:null,to:null},picked);
+    if(pickedDay&&!picked.size)picked.add(pickedDay);
+    const cells=monthCells(rangeMonth.year,rangeMonth.month,trips,idsOf(placeId()),today,dayInfo).map(cell=>({...cell,past:cell.key<today}));
+    $('.ke-range-grid').innerHTML=dateGrid(cells,today,range,picked);
     const next=nextMonth(),find=$('.ke-range [data-find-month]');
     find.hidden=!next;if(next)find.dataset.findMonth=`${next.year}-${next.month}`;
   }
@@ -805,15 +824,27 @@ async function mountCharterMap(root,options={}) {
         <p class="ke-trip-route">${routeMarkup(t.route,id)}</p>${where}<p class="ke-activity">${escapeHTML(t.activity)}</p>
         <a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{trip:t,destinationName,range:range.from?rangeLabel():null}))}" target="_blank" rel="noopener">${t.type==='cabin'?'Book your cabin':'Reserve this trip'}</a></div></article>`;
   }
-  const planLink=(name,when)=>`<a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{destinationName:name,range:when}))}" target="_blank" rel="noopener">Get in touch to plan your next adventure</a>`;
+  const planLink=(name,when,label='Get in touch to plan your next adventure')=>`<a class="ke-book" href="${escapeHTML(contactLink(contactUrl,{destinationName:name,range:when}))}" target="_blank" rel="noopener">${label}</a>`;
+  // A tapped day or chosen dates without a charter card never close the door (owner 6 Nov): no "booked" or "unavailable",
+  // only an invitation to the reservations team. One quiet block; the trip card keeps the only solid button.
+  const fullDate=key=>new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(`${key}T00:00:00Z`));
+  const INVITE="Speak with our team and we'll craft a voyage around your dates.";
+  const noteBlock=(title,body,name,when,label='Enquire about these dates')=>`<div class="ke-day-note"><p class="ke-day-note-title">${escapeHTML(title)}</p><p>${escapeHTML(body)}</p>
+    <a class="ke-day-note-link" href="${escapeHTML(contactLink(contactUrl,{destinationName:name,range:when}))}" target="_blank" rel="noopener">${label}</a></div>`;
+  function dayNote(id,key) {
+    const status=dayStatus(trips,idsOf(id),key,dateKey(),dayInfo),name=id?lookup[id].name:'Indonesia',when=shortDate(key);
+    if(status==='available')return '';
+    if(status==='open')return noteBlock(fullDate(key),'Kudanil Explorer is free on this date for a private charter.',name,when);
+    return noteBlock(fullDate(key),INVITE,name,when);
+  }
   // Never a dead end: say what is missing, then offer the next step.
   function emptyMarkup(id,monthly) {
     const name=id?lookup[id].name:'Indonesia';
-    if(monthly){
+    if(monthly&&!range.from){
       const next=nextMonth();
       return `<h3>No charters in ${monthName(rangeMonth)}</h3><div class="ke-menu-actions">${next?`<button type="button" class="ke-btn" data-find-month="${next.year}-${next.month}">Show ${monthName(next)}</button>`:''}${planLink(name,range.from?rangeLabel():monthName(rangeMonth))}</div>`;
     }
-    if(range.from)return `<p class="ke-empty">No charters${id?` to ${escapeHTML(name)}`:''} on these dates.</p><div class="ke-menu-actions"><button type="button" class="ke-btn" data-clear-range>Clear dates</button>${planLink(name,rangeLabel())}</div>`;
+    if(range.from)return noteBlock(rangeLabel(),INVITE,name,rangeLabel());
     const region=id&&regionOf(id),nearby=region&&region.id!==id?listFor(region.id).slice(0,2):[];
     return `<p class="ke-empty">${id?`No expeditions to ${escapeHTML(name)} are planned yet.`:'No upcoming expeditions are planned yet.'}</p>
       <div class="ke-menu-actions">${planLink(name,null)}</div>${nearby.length?`<h3>Nearby in ${escapeHTML(region.name)}</h3>${nearby.map(t=>tripCard(t,null)).join('')}`:''}`;
@@ -828,8 +859,8 @@ async function mountCharterMap(root,options={}) {
     line.innerHTML=id?`<button type="button" class="ke-back" data-menu-back>${backGlyph}All destinations</button><a class="ke-discover" href="https://www.kudanil.com/bespoke-expeditions${anchor?'#'+anchor:''}" target="_blank" rel="noopener">About ${escapeHTML(name)}</a>`
       :range.from?datesNote:`<span>${all.length?`${all.length} upcoming ${all.length===1?'charter':'charters'}`:'No upcoming charters'}</span>`;
     $('.ke-range').hidden=!monthly;syncView();if(monthly)renderCalendar();
-    let html=id&&range.from?`<p class="ke-dates-line">${datesNote}</p>`:'';
-    if(!shown.length)html+=emptyMarkup(id,monthly);
+    let html=(id&&range.from?`<p class="ke-dates-line">${datesNote}</p>`:'')+(monthly&&pickedDay?dayNote(id,pickedDay):'');
+    if(!shown.length){if(!html.includes('ke-day-note'))html+=emptyMarkup(id,monthly);}
     else if(monthly)html+=`<h3>Charters in ${monthName(rangeMonth)}</h3>${shown.map(t=>tripCard(t,id)).join('')}`;
     else if(!id){let last='';html+=shown.map(t=>{const m=monthName({year:+t.start.slice(0,4),month:+t.start.slice(5,7)-1}),head=m!==last?`<h3 class="ke-month-h">${m}</h3>`:'';last=m;return head+tripCard(t,null);}).join('');}
     else html+=shown.map(t=>tripCard(t,id)).join('');
@@ -854,9 +885,9 @@ async function mountCharterMap(root,options={}) {
     syncQuickTrigger();paintAvailability();renderMenu();placeBoat();
     draw();placeLabels();schedule();
   }
-  function setRange(from,to=null,announce=true) {
+  function setRange(from,to=null,announce=true,keepMonth=false) {
     range={from,to};pickedDay=null;
-    if(from)rangeMonth={year:Number(from.slice(0,4)),month:Number(from.slice(5,7))-1};
+    if(from&&!keepMonth)rangeMonth={year:Number(from.slice(0,4)),month:Number(from.slice(5,7))-1};
     refreshMenu();
     if(announce)status.textContent=from?`${charterCount(listFor(placeId(),false).length)}, ${rangeLabel()}`:'Dates cleared';
   }
@@ -917,7 +948,7 @@ async function mountCharterMap(root,options={}) {
     const isOpen=()=>period.getAttribute('aria-expanded')==='true';
     function render() {
       // Month dots follow the place the menu shows.
-      const bounds=monthRange(trips,null),available=monthAvailability(calendarTrips(placeId()),null,year),now=new Date(),current=get();
+      const bounds=monthRange(trips,null),available=monthAvailability(trips,idsOf(placeId()),year,undefined,dayInfo),now=new Date(),current=get();
       yearSelect.innerHTML=Array.from({length:bounds.max.year-bounds.min.year+1},(_,i)=>`<option value="${bounds.min.year+i}">${bounds.min.year+i}</option>`).join('');
       yearSelect.value=String(year);
       q('[data-year="-1"]').disabled=year<=bounds.min.year;
@@ -926,7 +957,7 @@ async function mountCharterMap(root,options={}) {
         const value={year,month:index},outOfRange=monthIndex(value)<monthIndex(bounds.min)||monthIndex(value)>monthIndex(bounds.max);
         const selected=monthIndex(value)===monthIndex(current),thisMonth=year===now.getFullYear()&&index===now.getMonth();
         return `<button type="button" class="ke-picker-month${selected?' is-selected':''}${thisMonth?' is-current':''}${available[index]?' has-availability':''}" data-pick="${index}"
-          ${outOfRange?'disabled':''} aria-pressed="${selected}" aria-label="${MONTHS_LONG[index]} ${year}${available[index]?', available or tentative dates':''}">${name}</button>`;
+          ${outOfRange?'disabled':''} aria-pressed="${selected}" aria-label="${MONTHS_LONG[index]} ${year}${available[index]?', available dates':''}">${name}</button>`;
       }).join('');
     }
     function sync() {
@@ -1021,10 +1052,21 @@ async function mountCharterMap(root,options={}) {
   // Tapping a green day lights up the charter(s) sailing that day; tapping it again lets go.
   on($('.ke-range-grid'),'click',event=>{
     const day=event.target.closest('[data-day]');if(!day)return;
-    const key=day.dataset.day;pickedDay=pickedDay===key?null:key;renderMenu();
+    // First tap = departure (shows its charter or a note); a later second tap = return, which sets the dates like the quick box.
+    // A tap after a range is set starts again from that day.
+    const key=day.dataset.day;
+    if(pickedDay&&!range.from&&key>pickedDay)setRange(pickedDay,key,true,true);
+    else{if(range.from)setRange(null,null,false,true);pickedDay=pickedDay===key?null:key;renderMenu();}
     $('.ke-range-grid').querySelector(`[data-day="${key}"]`)?.focus({preventScroll:true});
-    menu.querySelector('.ke-trip.is-match')?.scrollIntoView({block:'nearest',behavior:reduced.matches?'auto':'smooth'});
+    // No auto-scroll: the calendar must stay put between the departure and return taps.
   });
+  // Menu calendar: after a first tap, hovering a later day previews the stay.
+  on($('.ke-range-grid'),'pointerover',event=>{
+    const day=event.target.closest('[data-day]'),to=pickedDay&&!range.from&&day&&day.dataset.day>pickedDay?day.dataset.day:null;
+    $('.ke-range-grid').querySelectorAll('[data-day]').forEach(cell=>{const key=cell.dataset.day;
+      cell.classList.toggle('is-preview',Boolean(to&&key>pickedDay&&key<to));cell.classList.toggle('is-preview-end',key===to);});
+  });
+  on($('.ke-range-grid'),'pointerleave',()=>$('.ke-range-grid').querySelectorAll('.is-preview,.is-preview-end').forEach(cell=>cell.classList.remove('is-preview','is-preview-end')));
   // Quick dates: while a departure is picked, hovering a later day previews the stay.
   root.querySelectorAll('.ke-quick-grid').forEach(grid=>{
     on(grid,'pointerover',event=>{
@@ -1056,10 +1098,9 @@ async function mountCharterMap(root,options={}) {
     root.querySelectorAll('.ke-quick-month').forEach((box,i)=>{
       const at=plusMonth(quickMonth,i);
       box.querySelector('b').textContent=`${MONTHS_LONG[at.month]} ${at.year}`;
-      box.querySelector('.ke-quick-grid').innerHTML=dateGrid(rangeCells(at.year,at.month,notSailed(trips,today),today),today,draft);
+      box.querySelector('.ke-quick-grid').innerHTML=dateGrid(rangeCells(at.year,at.month,trips,today,dayInfo),today,draft);
     });
-    root.querySelectorAll('[data-quick-field]').forEach(field=>{const key=draft[field.dataset.quickField];
-      field.textContent=key?longDate(key):field.dataset.quickField==='from'?'Departure':'Return';field.classList.toggle('is-empty',!key);});
+    $('[data-quick-span]').textContent=draft.from?(draft.to&&draft.to!==draft.from?`${shortDate(draft.from,draft.from.slice(0,4)!==draft.to.slice(0,4))} – ${shortDate(draft.to)}`:shortDate(draft.from)):'';
     $('[data-quick-step="-1"]').disabled=monthIndex(quickMonth)<=monthIndex(bounds.min);
     $('[data-quick-step="1"]').disabled=monthIndex(plusMonth(quickMonth,1))>=monthIndex(bounds.max);
   }
@@ -1093,7 +1134,7 @@ async function mountCharterMap(root,options={}) {
       draft=!draft.from||draft.to||key<draft.from?{from:key,to:null}:{from:draft.from,to:key};
       renderQuick();quickPop.querySelector(`[data-day="${key}"]`)?.focus({preventScroll:true});return;
     }
-    if(event.target.closest('[data-quick-clear]')){draft={from:null,to:null};quickPreset='';renderQuick();return;}
+    if(event.target.closest('[data-quick-cancel]')){closeQuick(true);return;}
     if(event.target.closest('[data-quick-apply]')){closeQuick(true);setRange(draft.from,draft.to);}
   });
   on(document,'pointerdown',event=>{if(!quickPop.hidden&&!quick.contains(event.target))closeQuick();});
@@ -1158,7 +1199,7 @@ async function mountCharterMap(root,options={}) {
     if(disposed)return api;
     map.setAttribute('viewBox',`0 0 ${stage.clientWidth} ${stage.clientHeight}`);
     regions.forEach(p=>addMarker(p,true));locations.forEach(p=>addMarker(p,false));
-    root.dataset.sidebar='open';setSheet(false);fitMonth();$('[data-holds]').hidden=!notSailed(trips).some(t=>t.status==='tentative');paintAvailability();placeBoat();
+    root.dataset.sidebar='open';setSheet(false);fitMonth();paintAvailability();placeBoat();
     syncHeaderInset();camera=worldCamera();draw();updateMarkers();updateChrome();
     if(!reduced.matches){
       reveal(intro,120);reveal(map,150);markers.filter(m=>m.isRegion).forEach((m,i)=>reveal(m.anchor,300+i*100));
@@ -1267,6 +1308,12 @@ function readVoyages(scope=document){
   })).filter(item=>item.start&&item.end&&item.route);
 }
 
+// Dry dock periods: hidden Collection List on the "Dry Dock" collection, item [data-ke-drydock] with from/to fields.
+function readDrydocks(scope=document){
+  return [...scope.querySelectorAll('[data-ke-drydock]')].map(node=>({start:iso(text(node,'[data-ke-field="from"]')),end:iso(text(node,'[data-ke-field="to"]'))}))
+    .filter(item=>item.start&&item.end&&item.end>=item.start);
+}
+
 // Region membership now lives in the component (four regions matching /bespoke-expeditions), not in the CMS
 // `region-id` field, which still holds the retired two-region ids. The mount fills in destinations the CMS lacks
 // (Mentawai Islands) and skips any destination no region uses.
@@ -1280,7 +1327,7 @@ function mountKudanilFromWebflow({root=document.querySelector('[data-ke-map-root
   if(typeof mount!=='function')throw new Error('Kudanil map bundle is not loaded.');
   const scope=root.closest('[data-barba="container"]')||document,locations=readLocations(scope);
   // Destinations come from the component unless the page also renders the Charter Locations list.
-  return mount(root,{...(locations.length?{locations}:{}),trips:readTrips(scope),voyages:readVoyages(scope),regions:regionsFromLocations(),mapUrl,cloudUrl,contactUrl:'/contact',embedded:true});
+  return mount(root,{...(locations.length?{locations}:{}),trips:readTrips(scope),voyages:readVoyages(scope),drydocks:readDrydocks(scope),regions:regionsFromLocations(),mapUrl,cloudUrl,contactUrl:'/contact',embedded:true});
 }
 
 // Mount on direct load and after each Barba page transition; tear down before leaving so listeners do not leak.
@@ -1296,7 +1343,7 @@ function bootKudanilWebflow(){
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 }
 
-window.KudanilWebflowAdapter={mount:mountKudanilFromWebflow,boot:bootKudanilWebflow,readLocations,readTrips,readVoyages,regionsFromLocations};
+window.KudanilWebflowAdapter={mount:mountKudanilFromWebflow,boot:bootKudanilWebflow,readLocations,readTrips,readVoyages,readDrydocks,regionsFromLocations};
 
 bootKudanilWebflow();
 })();

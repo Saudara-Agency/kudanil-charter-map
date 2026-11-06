@@ -1,3 +1,6 @@
+
+
+
 /* --u is kudanil.com's fluid rem (10px from 1920 up, 430 canvas on phones), scoped so the component scales like the site under any root size. */
 .ke{--panel:#fff;--u:clamp(6.8px,.5208333vw,10px);
   --navy:#003357;--navy-10:#0033571a;--navy-20:#00335733;--navy-40:#00335766;--navy-60:#00335799;--navy-80:#003357cc;
@@ -451,3 +454,72 @@ button.ke-rday:active:not(:disabled)>span{transform:scale(.94)}
 .ke .ke-rday.is-inside.unavailable>span{background:#efcac4}
 .ke .ke-rday.is-inside.tentative>span{background:#eadfb6}
 .ke .ke-rday.is-inside>span,.ke .ke-rday.is-preview>span{box-shadow:none}
+/* Dry dock (Nov 2026): the only closed dates, quiet grey; open days share the available green. */
+.ke{--dock:#6f7a82;--dock-bg:#e7e5e1}
+.ke-legend .drydock{background:var(--dock)}
+.ke .ke-rday.drydock>span,.ke .ke-rday.is-inside.drydock>span,.ke .ke-rday.is-preview.drydock>span{background:var(--dock-bg);color:var(--dock)}
+/* Saudara dashboard calendar look (owner 6 Nov: "so nice and clean"). Plain numbers; availability is a thin line under the
+   day (green available, red booked, grey dry dock); the chosen range is one soft band per week row, rounded where the row
+   or range ends; first and last days are solid navy squares. Overrides every earlier tile rule. */
+.ke .ke-range-grid{row-gap:2px}
+.ke .ke-range-grid .ke-rday{--day-line:transparent;background:transparent;border-radius:0;box-shadow:inset 0 calc(var(--hair) * -2) 0 var(--day-line)}
+.ke .ke-range-grid .ke-rday>span,.ke .ke-range-grid .ke-rday.is-inside>span,.ke .ke-range-grid .ke-rday.is-preview>span{width:100%;background:transparent;color:var(--navy);border-radius:6px;box-shadow:none;outline:0}
+.ke .ke-range-grid .ke-rday.available{--day-line:#8cc2a5}
+.ke .ke-range-grid .ke-rday.unavailable{--day-line:#e2a59c}.ke .ke-range-grid .ke-rday.unavailable>span{color:var(--navy-60)}
+.ke .ke-range-grid .ke-rday.drydock{--day-line:#b7bcc0}.ke .ke-range-grid .ke-rday.drydock>span{color:var(--dock);text-decoration:line-through}
+.ke .ke-range-grid .ke-rday.past,.ke .ke-range-grid .ke-rday:disabled{--day-line:transparent}.ke .ke-range-grid .ke-rday.past>span{color:var(--navy-20)}
+.ke .ke-range-grid .ke-rday.in-band,.ke .ke-range-grid .ke-rday.is-preview{background:var(--brown-20)}
+.ke .ke-range-grid .ke-rday.band-l,.ke .ke-range-grid .ke-rday.is-preview:nth-child(7n+8){border-top-left-radius:6px;border-bottom-left-radius:6px}
+.ke .ke-range-grid .ke-rday.band-r,.ke .ke-range-grid .ke-rday.is-preview:nth-child(7n+14){border-top-right-radius:6px;border-bottom-right-radius:6px}
+.ke .ke-range-grid .ke-rday.is-start>span,.ke .ke-range-grid .ke-rday.is-end>span,.ke .ke-range-grid .ke-rday.is-preview-end>span,.ke .ke-range-grid .ke-rday.is-tapped>span{background:var(--navy);color:var(--white);font-weight:600;text-decoration:none}
+.ke .ke-range-grid .ke-rday.is-picked:not(.is-tapped)>span{background:transparent;color:var(--navy)}
+.ke .ke-range-grid .ke-rday.is-today:not(.is-start):not(.is-end):not(.is-tapped)>span{text-decoration:none;font-weight:400;box-shadow:inset 0 0 0 var(--hair) var(--navy-40)}
+@media(hover:hover) and (pointer:fine){.ke .ke-range-grid button.ke-rday:not(:disabled):not(.is-start):not(.is-end):not(.is-tapped):hover>span{outline:0;background:var(--navy-10)}}
+.ke-legend .available{background:#8cc2a5}.ke-legend .unavailable{background:#e2a59c}.ke-legend .drydock{background:#b7bcc0}
+.ke .ke-quick-foot{justify-content:flex-start}
+.ke .ke-quick-span{margin-right:auto;color:var(--navy);font-size:var(--t-ui);font-variant-numeric:tabular-nums}
+.ke .ke-btn.ke-quick-cancel{background:var(--white);color:var(--navy);border:var(--hair) solid var(--navy-20)}
+@media(hover:hover){.ke .ke-btn.ke-quick-cancel:hover{background:var(--hover-white);color:var(--navy)}}
+/* Panel hierarchy (owner 6 Nov: "confusing to scan"). One left edge (the panel gutter) for every block: the calendar fills the
+   column, the month name sits left with its arrows right, legend and "Show next availability" share one row. "On request"
+   days take a quiet sand line, never red. The day/date note is a linen block with a text link, so the trip card's button
+   is the only solid action. More space above a section heading than below it. */
+.ke .ke-range{display:flex;flex-wrap:wrap;align-items:center;column-gap:calc(var(--u) * 1.6)}
+.ke .ke-range>.ke-calendar-top,.ke .ke-range>.ke-calendar-body{flex:0 0 100%;max-width:none;margin-inline:0}
+.ke .ke-range .ke-calendar-top{max-width:none;margin:0 0 calc(var(--u) * .6);justify-content:flex-start;gap:calc(var(--u) * .4)}
+.ke .ke-range .ke-period{order:-1;margin-right:auto;padding-left:0;justify-content:flex-start}
+.ke .ke-range .ke-range-grid{max-width:none;margin:0}
+.ke .ke-range .ke-legend{flex:0 0 100%;justify-content:flex-start;margin-top:calc(var(--u) * 1.4)}
+.ke .ke-range .ke-find-dates{flex:none;margin:calc(var(--u) * 1.2) 0 0}
+.ke .ke-range-grid .ke-rday.unavailable{--day-line:#dcc7aa}.ke .ke-range-grid .ke-rday.unavailable>span{color:var(--navy-80)}
+.ke .ke-legend .unavailable{background:#dcc7aa}
+.ke .ke-day-note{margin:0 0 calc(var(--u) * 3.2);padding:calc(var(--u) * 1.6);border-radius:var(--r-lg);background:var(--cream)}
+.ke .ke-day-note p{margin:0;font-size:13px;line-height:1.5;color:var(--navy-80)}
+.ke .ke-day-note .ke-day-note-title{margin-bottom:calc(var(--u) * .4);font:500 max(15px,calc(var(--u) * 1.6))/1.3 'Forma DJR Micro',Arial,sans-serif;color:var(--navy)}
+.ke .ke-day-note-link{display:inline-block;margin-top:calc(var(--u) * 1.2);padding-bottom:2px;color:var(--navy);font-weight:500;font-size:13px;text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/100% var(--hair) no-repeat}
+@media(hover:hover) and (pointer:fine){.ke .ke-day-note-link:hover{color:var(--navy-80)}}
+.ke .ke-schedule-list>h3:not(:first-child),.ke .ke-schedule-list>.ke-month-h:not(:first-child){margin-top:calc(var(--u) * 3.2)}
+.ke .ke-schedule-list>.ke-day-note+h3{margin-top:0}
+.ke .ke-range-grid .ke-rday.ke-rday.is-start>span,.ke .ke-range-grid .ke-rday.ke-rday.is-end>span,.ke .ke-range-grid .ke-rday.ke-rday.is-preview-end>span,.ke .ke-range-grid .ke-rday.ke-rday.is-tapped>span{color:var(--white)}
+.ke .ke-range-grid .ke-rday.is-tapped.band-l.band-r{background:transparent}
+/* Full-day blocks back (owner 6 Nov: underlines too subtle). Each day is a soft block, same-colour neighbours in a week join
+   into one bar (run-l / run-r), only bar ends round. Chosen dates go one shade deeper; first/last day solid navy. */
+.ke .ke-range-grid{row-gap:4px}
+.ke .ke-range-grid .ke-rday{box-shadow:none}
+.ke .ke-range-grid .ke-rday.in-band,.ke .ke-range-grid .ke-rday.is-preview{background:transparent}
+.ke .ke-range-grid .ke-rday.available>span{background:#d6ebdf;color:#2f6347}
+.ke .ke-range-grid .ke-rday.unavailable>span{background:#f1e8db;color:#6f5a3e;text-decoration:none}
+.ke .ke-range-grid .ke-rday.available.in-band>span,.ke .ke-range-grid .ke-rday.available.is-preview>span{background:#b4d9c4}
+.ke .ke-range-grid .ke-rday.unavailable.in-band>span,.ke .ke-range-grid .ke-rday.unavailable.is-preview>span{background:#e4d3bb}
+.ke .ke-range-grid .ke-rday.run-l>span{border-top-left-radius:0;border-bottom-left-radius:0}
+.ke .ke-range-grid .ke-rday.run-r>span{border-top-right-radius:0;border-bottom-right-radius:0}
+.ke .ke-range-grid .ke-rday.ke-rday.is-start>span,.ke .ke-range-grid .ke-rday.ke-rday.is-end>span,.ke .ke-range-grid .ke-rday.ke-rday.is-preview-end>span,.ke .ke-range-grid .ke-rday.ke-rday.is-tapped>span{background:var(--navy);color:var(--white);border-radius:6px}
+.ke .ke-legend .available{background:#9fcdb3}.ke .ke-legend .unavailable{background:#dcc7aa}
+/* Where two different colours meet, leave a small gap so each run is its own rounded bar (owner 6 Nov: pinched seams). */
+.ke .ke-range-grid .ke-rday>span{width:auto;justify-self:stretch}
+.ke .ke-range-grid .ke-rday:not(.run-l)>span{margin-left:2px}
+.ke .ke-range-grid .ke-rday:not(.run-r)>span{margin-right:2px}
+/* Chosen dates must read as chosen, not as a darker status (owner 6 Nov, accessibility): one navy-tinted band across every
+   status (tone 'in' joins it), navy text; ends stay solid navy. Navy #003357 on #d3dee8 = 10.6:1. */
+.ke .ke-range-grid .ke-rday.ke-rday.in-band>span,.ke .ke-range-grid .ke-rday.ke-rday.is-preview>span{background:#d3dee8;color:var(--navy);font-weight:500}
+.ke .ke-range-grid .ke-rday.ke-rday.ke-rday.is-start>span,.ke .ke-range-grid .ke-rday.ke-rday.ke-rday.is-end>span,.ke .ke-range-grid .ke-rday.ke-rday.ke-rday.is-preview-end>span,.ke .ke-range-grid .ke-rday.ke-rday.ke-rday.is-tapped>span{background:var(--navy);color:var(--white);font-weight:600}
