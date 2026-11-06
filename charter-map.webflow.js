@@ -37,9 +37,13 @@ function dayStatus(trips, location, key, today=dateKey(), {busy=trips, drydocks=
   const on=t=>t.start<=key&&t.end>=key;
   if(drydocks.some(on))return 'drydock';
   if(!busy.some(on)&&!trips.some(on))return 'open';
-  // A hold, booking or a sailing already under way wins over an overlapping available record.
+  // A hold or booking wins over an overlapping available record: red 'booked' (owner 6 Nov: booked CMS trips show red).
+  // Anything else that takes the day (dry dock, a sailing under way, the boat away on an open trip) is 'unavailable' = On request.
+  const taken=t=>t.status==='booked'||t.status==='tentative';
   const here=scoped(trips,location).filter(on);
-  return here.length&&here.every(t=>t.status==='available'&&t.start>=today)?'available':'unavailable';
+  if(here.some(taken))return 'booked';
+  if(here.length&&here.every(t=>t.status==='available'&&t.start>=today))return 'available';
+  return trips.some(t=>on(t)&&taken(t))||busy.some(t=>on(t)&&taken(t))?'booked':'unavailable';
 }
 const bookableDay=status=>status==='available'||status==='open';
 // Months a visitor can browse: the current month through December of the year after the last scheduled trip.
@@ -398,7 +402,7 @@ const viewToggle=(calendar,results)=>`<div class="ke-availability-views" role="g
           </div>`;
 const backGlyph='<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M8 1.5 3.5 6 8 10.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 // Guests see two states only; dry dock days wear "On request" (owner 6 Nov: never say dry dock on the calendar).
-const legend='<div class="ke-legend"><span><i class="available"></i>Available</span><span><i class="unavailable"></i>On request</span></div>';
+const legend='<div class="ke-legend"><span><i class="available"></i>Available</span><span><i class="booked"></i>Booked</span><span><i class="unavailable"></i>On request</span></div>';
 // Month header and month/year picker overlay over the day grid, wired by monthNav.
 const calendarFrame=(id,grid)=>`<div class="ke-calendar-top"><button type="button" class="ke-calendar-arrow" data-step="-1" aria-label="Previous month">‹</button>
     <button type="button" class="ke-period" aria-expanded="false" aria-controls="${id}" aria-haspopup="dialog"><span class="ke-month" aria-live="polite"></span>${chevron}</button>
@@ -761,7 +765,7 @@ async function mountCharterMap(root,options={}) {
   }
   // Day grid. `menuDays` (the menu calendar) makes only bookable days buttons and marks the tapped charter's days;
   // without it (quick dates) every future day is a button for picking a range.
-  const dayWords={available:'available',open:'available, enquire',unavailable:'on request',drydock:'on request'};
+  const dayWords={available:'available',open:'available, enquire',booked:'booked',unavailable:'on request',drydock:'on request'};
   function dateGrid(cells,today,range,menuDays=null) {
     const end=range.to||range.from;
     // Same-colour neighbours in a week join into one band (runs), like Kumo/Meta pickers; ends of a run are rounded.
@@ -1304,7 +1308,8 @@ function readTrips(scope=document){
 // Every trip, any status and with or without map destinations, for the boat marker's position.
 function readVoyages(scope=document){
   return [...scope.querySelectorAll('[data-ke-trip]')].map(node=>({
-    start:iso(text(node,'[data-ke-field="from"]')),end:iso(text(node,'[data-ke-field="to"]')),route:text(node,'[data-ke-field="route"]')
+    start:iso(text(node,'[data-ke-field="from"]')),end:iso(text(node,'[data-ke-field="to"]')),route:text(node,'[data-ke-field="route"]'),
+    status:status(text(node,'[data-ke-field="status"]'))
   })).filter(item=>item.start&&item.end&&item.route);
 }
 

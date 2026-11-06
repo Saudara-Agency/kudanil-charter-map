@@ -523,3 +523,6 @@ button.ke-rday:active:not(:disabled)>span{transform:scale(.94)}
    status (tone 'in' joins it), navy text; ends stay solid navy. Navy #003357 on #d3dee8 = 10.6:1. */
 .ke .ke-range-grid .ke-rday.ke-rday.in-band>span,.ke .ke-range-grid .ke-rday.ke-rday.is-preview>span{background:#d3dee8;color:var(--navy);font-weight:500}
 .ke .ke-range-grid .ke-rday.ke-rday.ke-rday.is-start>span,.ke .ke-range-grid .ke-rday.ke-rday.ke-rday.is-end>span,.ke .ke-range-grid .ke-rday.ke-rday.ke-rday.is-preview-end>span,.ke .ke-range-grid .ke-rday.ke-rday.ke-rday.is-tapped>span{background:var(--navy);color:var(--white);font-weight:600}
+/* Booked (CMS status Booked) = soft red block, separate from sand On request. Red #8f3b31 on #f6dcd7 = 6.6:1. */
+.ke .ke-range-grid .ke-rday.booked>span{background:#f6dcd7;color:#8f3b31}
+.ke .ke-legend .booked{background:#e3a39a}
