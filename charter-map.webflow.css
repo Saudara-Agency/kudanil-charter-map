@@ -76,6 +76,7 @@
 .ke-marker{position:absolute;left:calc(var(--pin)/-2);top:calc(var(--pin)/-2);width:var(--pin);height:var(--pin);padding:0;border:0;background:transparent;pointer-events:auto}
 /* Preserve the site's small visible pin; extend its invisible touch target instead. */
 .ke-marker::before{content:'';position:absolute;left:50%;top:50%;width:max(44px,var(--pin));height:max(44px,var(--pin));transform:translate(-50%,-50%)}
+.ke-marker:not(.ke-region){scale:var(--marker-scale,1)}
 .ke-anchor.is-exiting{pointer-events:none}.ke-anchor.is-exiting .ke-marker{pointer-events:none}
 /* Site `.bes-map-location-ic`: cream box, brown-20 border, .2rem radius; hover fills brown-80 over .4s ease. */
 .ke-pin{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:var(--pin-pad);contain:paint;
@@ -164,8 +165,8 @@
 /* Boat marker: one navy silhouette everywhere (no rocking), faces its direction of travel, three wake rings under the hull. */
 .ke-boat{position:absolute;z-index:var(--layer-markers);left:0;top:0;width:0;height:0;pointer-events:none}
 .ke-boat-face{position:absolute;left:calc(var(--boat-w) / -2);bottom:calc(var(--boat-w) * -.18);display:block;width:var(--boat-w);transition:transform .6s var(--ease-out)}
-.ke{--boat-w:clamp(44px,3.6vw,64px)}
-@media(max-width:767px){.ke{--boat-w:36px}}
+.ke{--boat-w:calc(clamp(44px,3.6vw,64px) * var(--marker-scale,1))}
+@media(max-width:767px){.ke{--boat-w:calc(36px * var(--marker-scale,1))}}
 /* Docked: same boat, moored beside the pin on the side away from its name. */
 .ke-boat[data-docked] .ke-boat-face{left:calc(var(--pin) / 2 + 4px);bottom:calc(var(--boat-w) * -.24)}
 .ke-boat[data-docked][data-dock-side=left] .ke-boat-face{left:calc(var(--pin) / -2 - 4px - var(--boat-w))}

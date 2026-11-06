@@ -247,6 +247,8 @@ const LOCATIONS = [
   {id:'waigeo', name:'Waigeo', x:76.35, y:40.87, label:'top'},
   {id:'raja-ampat', name:'Raja Ampat', x:75.74, y:44.51, label:'left'},
   {id:'misool', name:'Misool', x:75.04, y:48.32, label:'bottom'},
+  // Placed where the owner marked it on the region view (2026-11-06), south coast of the Bird's Head.
+  {id:'kaimana', name:'Kaimana', x:77.53, y:46.85, label:'bottom'},
 ];
 // West to east. Names and anchors match kudanil.com/bespoke-expeditions.
 // A region with one member opens that destination directly.
@@ -263,7 +265,7 @@ const REGIONS = [
    // Banda sits in the Banda Sea south of Seram and Raja Ampat on the Bird's Head, far enough apart to stay separate on phones.
    x:70.18, y:61.34, label:'bottom', cameraScale:.7, members:['buru-island','seram-island','bandaneira'], image:'region-banda.jpg'},
   {id:'raja-ampat-papua', name:'Raja Ampat & Papua', anchor:'raja-ampat-papua',
-   x:77.73, y:35.88, label:'top', cameraScale:.8, members:['sorong','waigeo','raja-ampat','misool'], image:'region-raja.jpg'},
+   x:77.73, y:35.88, label:'top', cameraScale:.8, members:['sorong','waigeo','raja-ampat','misool','kaimana'], image:'region-raja.jpg'},
 ];
 const SITE_ANCHORS = Object.fromEntries(REGIONS.map(region=>[region.anchor,[...region.members]]));
 // Every available trip on kudanil.com/schedule-rates as of 2026-09-14 (all 12 paginated pages), from both lists:
@@ -306,11 +308,11 @@ const TRIPS = [
   { start:'2027-02-26', end:'2027-03-09', dates:'26 Feb – 9 Mar 2027', status:'available', type:'exclusive', nights:11,
     img:'https://cdn.prod.website-files.com/689eb59b898d833188934dfd/6a8ff164cd7764f54d2da3d9_kaimana%206.jpeg',
     route:'Kaimana - Sorong', stops:'Raja Ampat & Triton Bay', activity:'Cruise & Dive',
-    locations:['sorong', 'raja-ampat'] },
+    locations:['kaimana', 'sorong', 'raja-ampat'] },
   { start:'2027-03-11', end:'2027-03-20', dates:'11 Mar – 20 Mar 2027', status:'available', type:'exclusive', nights:9,
     img:'https://cdn.prod.website-files.com/689eb59b898d833188934dfd/6a8ff1f211c6f0666685f5ca_kaimana%205.jpeg',
     route:'Sorong - Kaimana', stops:'Raja Ampat & Triton Bay', activity:'Cruise & Dive',
-    locations:['sorong', 'raja-ampat'] },
+    locations:['sorong', 'raja-ampat', 'kaimana'] },
   { start:'2027-06-01', end:'2027-06-08', dates:'1 Jun – 8 Jun 2027', status:'available', type:'exclusive', nights:7,
     img:'https://cdn.prod.website-files.com/689eb59b898d833188934dfd/6aa79dc9438f7b41b4bc84ab_surf%20trip.jpg',
     route:'Padang - Padang', stops:'Mentawais, Telos & Banyak Islands', activity:'Surf',
@@ -359,7 +361,7 @@ const TRIPS = [
 // Ports that start or end voyages but have no destination pin. Estimated by the same lat/lon interpolation as the
 // CMS Kupang pin (Labuan Bajo and Sorong anchors); fine for the boat marker, re-measure before using them as pins.
 const PORTS = {
-  kupang:{x:61.98, y:78.44}, ambon:{x:71.37, y:54.22}, kaimana:{x:81.83, y:53.16},
+  kupang:{x:61.98, y:78.44}, ambon:{x:71.37, y:54.22},
   tambolaka:{x:52.94, y:76.04}, padang:{x:12.45, y:48.98},
 };
 // Every voyage (any status, archived included) from the Webflow Trips CMS, pulled 2026-10-21, for the boat marker only.
@@ -685,6 +687,10 @@ async function mountCharterMap(root,options={}) {
     const visible=markers.filter(m=>!m.anchor.hidden&&!m.anchor.classList.contains('is-exiting')),occupied=[];
     const stageRect=stage.getBoundingClientRect(),area=view==='world'?{x:0,y:headerInset(),width:stage.clientWidth-side(),height:stage.clientHeight-headerInset()}:viewport(view==='location');
     const overlaps=(a,b)=>Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+    // Pins packed close on screen (small displays, tight regions) shrink with their names and the boat, down to 75%.
+    const pins=visible.filter(m=>!m.isRegion),pinSize=pins[0]?.button.offsetWidth||0;let gap=Infinity;
+    pins.forEach((a,i)=>pins.slice(i+1).forEach(b=>{gap=Math.min(gap,Math.hypot(a.anchor.dataset.screenX-b.anchor.dataset.screenX,a.anchor.dataset.screenY-b.anchor.dataset.screenY));}));
+    root.style.setProperty('--marker-scale',String(pinSize&&gap<Infinity?Math.min(1,Math.max(.75,gap/(pinSize*3))):1));
     const icons=visible.map(m=>m.button.querySelector('.ke-pin').getBoundingClientRect());
     icons.forEach((r,i)=>{icons[i]={left:r.left-3,right:r.right+3,top:r.top-3,bottom:r.bottom+3};});
     // Destination labels also avoid the on-map controls, which matter most in the short map strip on phones.
@@ -1293,6 +1299,8 @@ function readTrips(scope=document){
       .map(location=>attr(location,'data-ke-id')||slug(location.textContent)).filter(Boolean);
     // Mentawai trips are rarely tagged in the CMS; their route/stops always name Padang or the Mentawais.
     if(!locations.length&&/padang|mentawai/i.test(`${route} ${stops}`))locations=['mentawai'];
+    // shortcut: the CMS has no Kaimana location yet, so routes naming it get the pin; drop once Mariza can tag Kaimana.
+    if(locations.length&&/kaimana/i.test(route)&&!locations.includes('kaimana'))locations.push('kaimana');
     return {
       id:attr(node,'data-ke-id'),start,end,
       dates:dateLabel(start,end),
