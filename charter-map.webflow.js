@@ -722,7 +722,7 @@ async function mountCharterMap(root,options={}) {
     });
   }
   function updateChrome() {
-    root.dataset.view=view;intro.hidden=view!=='world';nav.hidden=view==='world';destinationNav.hidden=view!=='location';
+    root.dataset.view=view;intro.hidden=view!=='world';nav.hidden=view==='world';destinationNav.hidden=view!=='location'||lookup[activeRegion].members.length<2;
     if(view==='world')closeRegionMenu();
     if(activeRegion){
       const current=$('.ke-region-current');
@@ -1043,8 +1043,9 @@ async function mountCharterMap(root,options={}) {
   on(root,'click',event=>{if(!event.target.closest('.ke-region-menu'))closeRegionMenu();pickers.forEach(nav=>{if(!nav.owns(event.target))nav.close();});},{capture:true});
   root.querySelectorAll('.ke-region-list [data-region]').forEach(button=>on(button,'click',()=>enterRegion(button.dataset.region)));
   root.querySelectorAll('[data-destination]').forEach(button=>on(button,'click',()=>{
-    if(!activeLocation)return;const index=locations.findIndex(location=>location.id===activeLocation),step=button.dataset.destination==='next'?1:-1;
-    openLocation(locations[(index+step+locations.length)%locations.length].id);
+    // Loop the open region's destinations only, never jump to another region.
+    if(!activeLocation)return;const members=lookup[activeRegion].members,index=members.indexOf(activeLocation),step=button.dataset.destination==='next'?1:-1;
+    openLocation(members[(index+step+members.length)%members.length]);
   }));
   // One handler for the menu's links: back, route stops, region names, next month, clear dates.
   on(menu,'click',event=>{
