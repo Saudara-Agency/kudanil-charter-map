@@ -249,6 +249,16 @@ const LOCATIONS = [
   {id:'misool', name:'Misool', x:75.04, y:48.32, label:'bottom'},
   // Placed where the owner marked it on the region view (2026-11-06), south coast of the Bird's Head.
   {id:'kaimana', name:'Kaimana', x:77.53, y:46.85, label:'bottom'},
+  // Forgotten Islands, from the designer's November 2026 map (pins snapped to the matching islands of this art).
+  // Serua and Manuk islands were missing from the traced art; grafted from the designer SVG, pins on them.
+  {id:'kupang', name:'Kupang', x:61.84, y:75.95, label:'bottom'},
+  {id:'alor', name:'Alor', x:63.75, y:71.33, label:'top'},
+  {id:'wetar', name:'Wetar', x:66.89, y:69.73, label:'bottom'},
+  {id:'romang-island', name:'Romang', x:69.38, y:68.89, label:'bottom'},
+  {id:'damar-island', name:'Damar', x:71.74, y:67.31, label:'right'},
+  {id:'serua-island', name:'Serua', x:74.89, y:65.49, label:'right'},
+  {id:'manuk-island', name:'Manuk', x:74.31, y:62.67, label:'right'},
+  {id:'watubela', name:'Watubela', x:78.07, y:58.33, label:'right'},
 ];
 // West to east. Names and anchors match kudanil.com/bespoke-expeditions.
 // A region with one member opens that destination directly.
@@ -264,6 +274,9 @@ const REGIONS = [
   {id:'banda-spice-island', name:'Banda & Spice Islands', anchor:'banda-spice-island',
    // Banda sits in the Banda Sea south of Seram and Raja Ampat on the Bird's Head, far enough apart to stay separate on phones.
    x:70.18, y:61.34, label:'bottom', cameraScale:.7, members:['buru-island','seram-island','bandaneira'], image:'region-banda.jpg'},
+  // Split from Banda & Spice Islands (designer map, November 2026). No hero photo on kudanil.com yet, Banda's stands in.
+  {id:'forgotten-islands', name:'Forgotten Islands', anchor:'forgotten-islands',
+   x:73.05, y:76.62, label:'top', cameraScale:.9, members:['kupang','alor','wetar','romang-island','damar-island','serua-island','manuk-island','watubela'], image:'region-banda.jpg'},
   {id:'raja-ampat-papua', name:'Raja Ampat & Papua', anchor:'raja-ampat-papua',
    x:77.73, y:35.88, label:'top', cameraScale:.8, members:['sorong','waigeo','raja-ampat','misool','kaimana'], image:'region-raja.jpg'},
 ];
@@ -287,7 +300,7 @@ const TRIPS = [
   { start:'2026-09-22', end:'2026-10-04', dates:'22 Sep – 4 Oct 2026', status:'available', type:'exclusive', nights:12,
     img:'https://cdn.prod.website-files.com/689eb59b898d833188934dfd/6a1fe1b7288bfc22a2bde0de_kudanil-explorer-expeditions-culture-savu-8.jpg',
     route:'Labuan Bajo - Kupang', stops:'Komodo, Flores, Alor, Kupang', activity:'Cruise and Dive',
-    locations:['labuan-bajo', 'komodo'] },
+    locations:['labuan-bajo', 'komodo', 'alor', 'kupang'] },
   { start:'2026-10-24', end:'2026-11-05', dates:'24 Oct – 5 Nov 2026', status:'available', type:'cabin', nights:12, asset:'trip-4.jpg',
     img:'https://cdn.prod.website-files.com/689eb59b898d833188934dfd/68e324054c60e2add25b3956_Kudanil_JackJohns_LR_27_DJI_0089%20(4).jpg',
     route:'Ambon - Sorong', stops:'Ambon, Northern Seram & Southern Raja Ampat', activity:'Cruise & Dive',
@@ -340,11 +353,11 @@ const TRIPS = [
   { start:'2027-10-18', end:'2027-10-30', dates:'18 Oct – 30 Oct 2027', status:'available', type:'exclusive', nights:12,
     img:'https://cdn.prod.website-files.com/689eb59b898d833188934dfd/69d50c5cc0c16c4de6614ad1_Screenshot%202026-04-07%20215323.png',
     route:'Labuan Bajo - Kupang', stops:'Komodo National Park, Flores, Adonara, Lembata & Alor', activity:'Cruise & Dive',
-    locations:['labuan-bajo', 'komodo'] },
+    locations:['labuan-bajo', 'komodo', 'alor', 'kupang'] },
   { start:'2027-11-02', end:'2027-11-14', dates:'2 Nov – 14 Nov 2027', status:'available', type:'exclusive', nights:12,
     img:'https://cdn.prod.website-files.com/689eb59b898d833188934dfd/69d50d05068a80bdcabf9e9f_Screenshot%202026-04-07%20215612.png',
     route:'Kupang - Ambon', stops:'Forgotten & Spice Islands', activity:'Cruise & Dive',
-    locations:['bandaneira'] },
+    locations:['kupang', 'bandaneira'] },
   { start:'2027-11-16', end:'2027-11-28', dates:'16 Nov – 28 Nov 2027', status:'available', type:'exclusive', nights:12,
     img:'https://cdn.prod.website-files.com/689eb59b898d833188934dfd/69d50da04e8f0cfa6f69eb79_Screenshot%202026-04-07%20215847.png',
     route:'Ambon - Sorong', stops:'Spice Islands & Raja Ampat', activity:'Cruise & Dive',
@@ -361,7 +374,7 @@ const TRIPS = [
 // Ports that start or end voyages but have no destination pin. Estimated by the same lat/lon interpolation as the
 // CMS Kupang pin (Labuan Bajo and Sorong anchors); fine for the boat marker, re-measure before using them as pins.
 const PORTS = {
-  kupang:{x:61.98, y:78.44}, ambon:{x:71.37, y:54.22},
+  ambon:{x:71.37, y:54.22},
   tambolaka:{x:52.94, y:76.04}, padang:{x:12.45, y:48.98},
 };
 // Every voyage (any status, archived included) from the Webflow Trips CMS, pulled 2026-10-21, for the boat marker only.
@@ -420,7 +433,7 @@ const calendarFrame=(id,grid)=>`<div class="ke-calendar-top"><button type="butto
 // frame) placed in the 1920x1080 map units that pins, ports and the sea mask use.
 const LAND_ART={x:52,y:216,width:1820.16,height:663.6};
 const LAND_BOUNDS=[{x:LAND_ART.x,y:LAND_ART.y},{x:LAND_ART.x+LAND_ART.width,y:LAND_ART.y+LAND_ART.height}];
-const REGION_ART=['mentawai-islands','komodo-beyond','banda-spice-island','raja-ampat-papua'];
+const REGION_ART=['mentawai-islands','komodo-beyond','banda-spice-island','forgotten-islands','raja-ampat-papua'];
 const MONTHS_SHORT=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const shiftKey=(key,{days=0,months=0})=>{const d=new Date(`${key}T00:00:00Z`);d.setUTCMonth(d.getUTCMonth()+months);d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10);};
 const MONTHS_LONG=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -1277,6 +1290,8 @@ const dateLabel=(start,end)=>{
   const f=(key,year)=>new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',...(year?{year:'numeric'}:{}),timeZone:'UTC'}).format(new Date(`${key}T00:00:00Z`));
   return start&&end?`${f(start,start.slice(0,4)!==end.slice(0,4))} – ${f(end,true)}`:'';
 };
+const UNTAGGED=[['kaimana',/kaimana/i],['kupang',/kupang/i],['alor',/\balor\b/i],['wetar',/wetar/i],['romang-island',/romang/i],
+  ['damar-island',/damar/i],['serua-island',/serua/i],['manuk-island',/manuk/i],['watubela',/watubela/i]];
 const slug=value=>String(value||'').trim().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 
 function readLocations(scope=document){
@@ -1300,8 +1315,8 @@ function readTrips(scope=document){
       .map(location=>attr(location,'data-ke-id')||slug(location.textContent)).filter(Boolean);
     // Mentawai trips are rarely tagged in the CMS; their route/stops always name Padang or the Mentawais.
     if(!locations.length&&/padang|mentawai/i.test(`${route} ${stops}`))locations=['mentawai'];
-    // shortcut: the CMS has no Kaimana location yet, so routes naming it get the pin; drop once Mariza can tag Kaimana.
-    if(locations.length&&/kaimana/i.test(route)&&!locations.includes('kaimana'))locations.push('kaimana');
+    // shortcut: the CMS has no Kaimana or Forgotten Islands locations yet, so trips naming them get the pin; drop once Mariza can tag them.
+    if(locations.length)for(const [id,pattern] of UNTAGGED)if(pattern.test(`${route} ${stops}`)&&!locations.includes(id))locations.push(id);
     return {
       id:attr(node,'data-ke-id'),start,end,
       dates:dateLabel(start,end),
